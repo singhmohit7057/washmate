@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /schedule-pickup
+Disallow: /order-tracking
+Disallow: /order-history
+Disallow: /profile
+Disallow: /admin
+Disallow: /super-admin
+
+Sitemap: https://washmate.in/sitemap.xml

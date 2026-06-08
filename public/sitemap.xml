@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://washmate.in/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://washmate.in/services</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://washmate.in/pricing</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://washmate.in/how-it-works</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://washmate.in/service-areas</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://washmate.in/service-areas/kolkata</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://washmate.in/service-areas/barrackpore</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://washmate.in/service-areas/kankinara</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://washmate.in/service-areas/naihati</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://washmate.in/service-areas/titagarh</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://washmate.in/service-areas/kalyani</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://washmate.in/about</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://washmate.in/contact</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+</urlset>
