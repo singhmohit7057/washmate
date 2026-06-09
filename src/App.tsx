@@ -4,9 +4,29 @@ import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ui/ProtectedRoute';
 import LoadingSpinner from './components/ui/LoadingSpinner';
 
-function ScrollToTop() {
-  const { pathname } = useLocation();
-  useEffect(() => { window.scrollTo({ top: 0, left: 0, behavior: 'instant' }); }, [pathname]);
+const NAVBAR_OFFSET = 96;
+
+function scrollToId(id: string) {
+  const el = document.getElementById(id);
+  if (el) {
+    const top = el.getBoundingClientRect().top + window.scrollY - NAVBAR_OFFSET;
+    window.scrollTo({ top, behavior: 'smooth' });
+  } else {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }
+}
+
+function ScrollHandler() {
+  const { pathname, hash } = useLocation();
+  useEffect(() => {
+    if (hash) {
+      const id = hash.slice(1);
+      const t = setTimeout(() => scrollToId(id), 350);
+      return () => clearTimeout(t);
+    } else {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    }
+  }, [pathname, hash]);
   return null;
 }
 
@@ -45,7 +65,7 @@ export default function App() {
     <BrowserRouter>
       <AuthProvider>
         <Suspense fallback={<LoadingSpinner fullPage />}>
-          <ScrollToTop />
+          <ScrollHandler />
           <Routes>
             {/* Public */}
             <Route path="/" element={<HomePage />} />

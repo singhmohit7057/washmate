@@ -738,8 +738,8 @@ function OrderExpandedPanel({
             </div>
           )}
 
-          {/* ── Add Item Form ── */}
-          <div style={{ padding: '14px 14px', borderTop: `1px solid ${COLORS.border}`, background: '#FAFFFE' }}>
+          {/* ── Add Item Form — hidden once delivered or cancelled ── */}
+          {!['delivered', 'cancelled'].includes(order.status) && <div style={{ padding: '14px 14px', borderTop: `1px solid ${COLORS.border}`, background: '#FAFFFE' }}>
             <p style={{ margin: '0 0 10px', fontSize: '11px', fontWeight: 700, color: COLORS.muted, textTransform: 'uppercase', letterSpacing: '0.04em' }}>+ Add Item</p>
 
             {/* Category tabs */}
@@ -811,7 +811,7 @@ function OrderExpandedPanel({
               style={{ width: '100%', padding: '9px', borderRadius: '8px', background: catColor, color: '#fff', fontWeight: 700, fontSize: '13px', border: 'none', cursor: 'pointer', fontFamily: 'inherit', opacity: saving || !canAdd ? 0.45 : 1 }}>
               {saving ? 'Adding…' : `+ Add to Bill`}
             </button>
-          </div>
+          </div>}
         </div>
 
         {/* ── Status Update ── */}

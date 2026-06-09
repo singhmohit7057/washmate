@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, Tag, MapPin, Plus, Home, Briefcase } from 'lucide-react';
 import Layout from '../../components/layout/Layout';
@@ -39,6 +39,7 @@ type AddrMode = 'saved' | 'new';
 export default function SchedulePickupPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const [form, setForm] = useState<SchedulePickupForm>({
     fullName: '',
@@ -49,7 +50,7 @@ export default function SchedulePickupPage() {
     serviceType: '',
     pickupDate: '',
     pickupTime: '',
-    deliveryType: 'regular',
+    deliveryType: searchParams.get('type') === 'express' ? 'express' : 'regular',
     couponCode: '',
     notes: '',
   });
@@ -74,6 +75,8 @@ export default function SchedulePickupPage() {
   const [addrMode, setAddrMode]           = useState<AddrMode>('saved');
   const [selectedAddrId, setSelectedAddrId] = useState<string | null>(null);
   const [addrsLoaded, setAddrsLoaded]     = useState(false);
+  const [saveNewAddr, setSaveNewAddr]     = useState(false);
+  const [newAddrLabel, setNewAddrLabel]   = useState<'Home' | 'Work' | 'Other'>('Home');
 
   useEffect(() => {
     if (!user) return;
@@ -167,6 +170,18 @@ export default function SchedulePickupPage() {
         coupon_code: form.couponCode || null,
       });
       if (error) throw error;
+      // Optionally persist the manually-entered address to the user's saved addresses
+      if (saveNewAddr && addrMode !== 'saved' && form.address.trim()) {
+        const isFirst = addresses.length === 0;
+        await supabase.from('user_addresses').insert({
+          user_id: user.id,
+          label: newAddrLabel,
+          address: form.address.trim(),
+          city: form.city.trim(),
+          pincode: form.pincode.trim(),
+          is_default: isFirst,
+        });
+      }
       setOrderNumber(num);
       setSuccess(true);
     } catch {
@@ -306,10 +321,25 @@ export default function SchedulePickupPage() {
                     <Input label="City *" placeholder="Kolkata" value={form.city} onChange={update('city')} error={errors.city} />
                     <Input label="Pincode" placeholder="700001" value={form.pincode} onChange={update('pincode')} />
                   </div>
-                  {addresses.length === 0 && addrsLoaded && (
-                    <p style={{ fontSize: '12px', color: COLORS.muted, margin: 0 }}>
-                      💡 <Link to="/profile" style={{ color: COLORS.primary, fontWeight: 600, textDecoration: 'none' }}>Save addresses in your profile</Link> for faster checkout next time.
-                    </p>
+                  {/* Save address checkbox */}
+                  {addrsLoaded && (
+                    <div>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', userSelect: 'none' }}>
+                        <input type="checkbox" checked={saveNewAddr} onChange={e => setSaveNewAddr(e.target.checked)}
+                          style={{ width: 16, height: 16, cursor: 'pointer', accentColor: COLORS.primary }} />
+                        <span style={{ fontSize: '13px', fontWeight: 600, color: COLORS.dark }}>Save this address to my profile</span>
+                      </label>
+                      {saveNewAddr && (
+                        <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
+                          {(['Home', 'Work', 'Other'] as const).map(lbl => (
+                            <button key={lbl} type="button" onClick={() => setNewAddrLabel(lbl)}
+                              style={{ flex: 1, padding: '7px', borderRadius: '8px', border: `1.5px solid ${newAddrLabel === lbl ? COLORS.primary : COLORS.border}`, background: newAddrLabel === lbl ? COLORS.primaryLight : '#fff', color: newAddrLabel === lbl ? COLORS.primary : COLORS.muted, fontSize: '12px', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                              {lbl === 'Home' ? '🏠' : lbl === 'Work' ? '💼' : '📍'} {lbl}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   )}
                 </motion.div>
               )}
