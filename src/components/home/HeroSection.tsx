@@ -20,7 +20,7 @@ export default function HeroSection() {
         <div style={{ position: 'absolute', bottom: '0%', left: '-10%', width: 400, height: 400, borderRadius: '50%', background: 'radial-gradient(circle, #EDE9FE 0%, transparent 70%)', opacity: 0.5 }} />
       </div>
 
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '80px 24px', width: '100%', position: 'relative', zIndex: 1 }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '80px 24px', width: '100%', position: 'relative', zIndex: 1 }} className="hero-inner">
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '64px', alignItems: 'center' }} className="hero-grid">
 
           {/* Text side */}
@@ -49,7 +49,7 @@ export default function HeroSection() {
               Schedule pickup, track orders, and enjoy premium garment care without leaving your home. {BRAND.tagline}
             </p>
 
-            <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', marginBottom: '48px' }}>
+            <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', marginBottom: '48px' }} className="hero-buttons">
               <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.98 }}>
                 <Link
                   to="/schedule-pickup"
@@ -73,7 +73,7 @@ export default function HeroSection() {
             </div>
 
             {/* Stats */}
-            <div style={{ display: 'flex', gap: '32px', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: '32px', flexWrap: 'wrap' }} className="hero-stats">
               {[
                 { value: '5000+', label: 'Happy Customers' },
                 { value: '50K+', label: 'Orders Completed' },
@@ -119,6 +119,15 @@ export default function HeroSection() {
         @media (max-width: 768px) {
           .hero-grid { grid-template-columns: 1fr !important; gap: 40px !important; text-align: center; }
           .hero-illustration { display: none !important; }
+          .hero-buttons { justify-content: center !important; }
+          .hero-stats { justify-content: center !important; }
+          .hero-inner { padding: 60px 16px !important; }
+        }
+        @media (max-width: 480px) {
+          .hero-buttons { flex-direction: column !important; align-items: stretch !important; }
+          .hero-buttons a, .hero-buttons > div { width: 100% !important; text-align: center; justify-content: center; }
+          .hero-stats { gap: 20px !important; }
+          .hero-inner { padding: 48px 16px !important; }
         }
       `}</style>
     </section>

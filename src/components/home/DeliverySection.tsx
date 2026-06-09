@@ -9,7 +9,7 @@ export default function DeliverySection() {
   const { ref, isVisible } = useScrollAnimation();
 
   return (
-    <section ref={ref} style={{ padding: '96px 24px', background: COLORS.dark, overflow: 'hidden' }}>
+    <section ref={ref} style={{ padding: '96px 24px', background: COLORS.dark, overflow: 'hidden' }} className="delivery-section">
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
         {/* Header */}
         <motion.div
@@ -146,8 +146,12 @@ export default function DeliverySection() {
 
       <style>{`
         @media (max-width: 768px) {
-          .delivery-grid { grid-template-columns: 1fr !important; }
+          .delivery-grid { grid-template-columns: 1fr !important; gap: 32px !important; }
           .delivery-van { display: none !important; }
+        }
+        @media (max-width: 600px) {
+          .delivery-section { padding: 60px 16px !important; }
+          .delivery-cards-grid { gap: 12px !important; }
         }
       `}</style>
     </section>

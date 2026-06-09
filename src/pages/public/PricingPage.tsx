@@ -126,10 +126,10 @@ export default function PricingPage() {
         </div>
       </section>
 
-      <section style={{ padding: '48px 24px 80px', background: '#fff' }}>
+      <section style={{ padding: '48px 24px 80px', background: '#fff' }} className="pricing-section">
         <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
           {/* Controls */}
-          <div style={{ display: 'flex', gap: '16px', marginBottom: '32px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+          <div style={{ display: 'flex', gap: '16px', marginBottom: '32px', flexWrap: 'wrap', alignItems: 'flex-end' }} className="pricing-controls">
             <div style={{ flex: 1, minWidth: 200 }}>
               <Input
                 placeholder="Search items..."
@@ -224,6 +224,15 @@ export default function PricingPage() {
           )}
         </div>
       </section>
+      <style>{`
+        @media (max-width: 600px) {
+          .pricing-section { padding: 32px 16px 60px !important; }
+          .pricing-controls { flex-direction: column !important; }
+          .pricing-controls > div, .pricing-controls > button { width: 100% !important; }
+          .pricing-controls select { width: 100% !important; }
+          .pricing-controls button { justify-content: center; }
+        }
+      `}</style>
     </Layout>
   );
 }

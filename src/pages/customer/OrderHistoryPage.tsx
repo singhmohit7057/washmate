@@ -24,7 +24,8 @@ export default function OrderHistoryPage() {
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .then(({ data }) => {
-        setOrders((data ?? []).map(d => ({
+        type Row = { id: string; order_number: string; status: string; delivery_type: string; pickup_date: string; pickup_time: string; total: number; created_at: string };
+        setOrders(((data ?? []) as Row[]).map(d => ({
           id: d.id,
           orderNumber: d.order_number,
           status: d.status,
@@ -71,39 +72,81 @@ export default function OrderHistoryPage() {
             </Link>
           </div>
         ) : (
-          <div style={{ background: '#fff', borderRadius: '16px', border: `1px solid ${COLORS.border}`, overflow: 'hidden' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 100px 80px 80px', padding: '12px 20px', background: COLORS.background, gap: '8px' }}>
-              {['Order #', 'Pickup Date', 'Service', 'Total', 'Status', ''].map(h => (
-                <span key={h} style={{ fontSize: '12px', fontWeight: 700, color: COLORS.muted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</span>
+          <>
+            {/* Desktop table */}
+            <div className="order-table" style={{ background: '#fff', borderRadius: '16px', border: `1px solid ${COLORS.border}`, overflow: 'hidden' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 100px 110px 80px', padding: '12px 20px', background: COLORS.background, gap: '8px' }}>
+                {['Order #', 'Pickup Date', 'Service', 'Total', 'Status', ''].map(h => (
+                  <span key={h} style={{ fontSize: '12px', fontWeight: 700, color: COLORS.muted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</span>
+                ))}
+              </div>
+              {orders.map((order, i) => (
+                <motion.div
+                  key={order.id}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: i * 0.03 }}
+                  style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 100px 110px 80px', padding: '16px 20px', gap: '8px', borderTop: `1px solid ${COLORS.border}`, alignItems: 'center' }}
+                >
+                  <span style={{ fontWeight: 700, color: COLORS.dark, fontSize: '14px' }}>#{order.orderNumber}</span>
+                  <span style={{ fontSize: '14px', color: COLORS.darkMuted }}>{new Date(order.pickupDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                  <span style={{ fontSize: '13px', color: COLORS.muted, textTransform: 'capitalize' }}>{order.deliveryType}</span>
+                  <span style={{ fontWeight: 700, color: COLORS.dark }}>₹{order.total}</span>
+                  <Badge variant={getVariant(order.status)} size="sm">
+                    {ORDER_STATUSES.find(s => s.key === order.status)?.label ?? order.status}
+                  </Badge>
+                  <Link to={`/order-tracking?order=${order.id}`} style={{ display: 'flex', alignItems: 'center', gap: '4px', color: COLORS.primary, fontWeight: 600, fontSize: '13px', textDecoration: 'none' }}>
+                    Track <ArrowRight size={12} />
+                  </Link>
+                </motion.div>
               ))}
             </div>
-            {orders.map((order, i) => (
-              <motion.div
-                key={order.id}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: i * 0.03 }}
-                style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 100px 80px 80px', padding: '16px 20px', gap: '8px', borderTop: `1px solid ${COLORS.border}`, alignItems: 'center' }}
-                className="order-row"
-              >
-                <span style={{ fontWeight: 700, color: COLORS.dark, fontSize: '14px' }}>#{order.orderNumber}</span>
-                <span style={{ fontSize: '14px', color: COLORS.darkMuted }}>{new Date(order.pickupDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
-                <span style={{ fontSize: '13px', color: COLORS.muted, textTransform: 'capitalize' }}>{order.deliveryType}</span>
-                <span style={{ fontWeight: 700, color: COLORS.dark }}>₹{order.total}</span>
-                <Badge variant={getVariant(order.status)} size="sm">
-                  {ORDER_STATUSES.find(s => s.key === order.status)?.label ?? order.status}
-                </Badge>
-                <Link to={`/order-tracking?order=${order.id}`} style={{ display: 'flex', alignItems: 'center', gap: '4px', color: COLORS.primary, fontWeight: 600, fontSize: '13px', textDecoration: 'none' }}>
-                  Track <ArrowRight size={12} />
-                </Link>
-              </motion.div>
-            ))}
-          </div>
+
+            {/* Mobile cards */}
+            <div className="order-cards" style={{ display: 'none', flexDirection: 'column', gap: '12px' }}>
+              {orders.map((order, i) => (
+                <motion.div
+                  key={order.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.04 }}
+                  style={{ background: '#fff', borderRadius: '14px', border: `1px solid ${COLORS.border}`, padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontWeight: 800, color: COLORS.dark, fontSize: '15px' }}>#{order.orderNumber}</span>
+                    <Badge variant={getVariant(order.status)} size="sm">
+                      {ORDER_STATUSES.find(s => s.key === order.status)?.label ?? order.status}
+                    </Badge>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
+                    <div>
+                      <div style={{ fontSize: '11px', fontWeight: 700, color: COLORS.muted, textTransform: 'uppercase', marginBottom: '2px' }}>Pickup</div>
+                      <div style={{ fontSize: '13px', color: COLORS.darkMuted }}>{new Date(order.pickupDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '11px', fontWeight: 700, color: COLORS.muted, textTransform: 'uppercase', marginBottom: '2px' }}>Service</div>
+                      <div style={{ fontSize: '13px', color: COLORS.muted, textTransform: 'capitalize' }}>{order.deliveryType}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '11px', fontWeight: 700, color: COLORS.muted, textTransform: 'uppercase', marginBottom: '2px' }}>Total</div>
+                      <div style={{ fontSize: '15px', fontWeight: 800, color: COLORS.dark }}>₹{order.total}</div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'flex-end' }}>
+                      <Link to={`/order-tracking?order=${order.id}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: COLORS.primary, fontWeight: 700, fontSize: '14px', textDecoration: 'none' }}>
+                        Track Order <ArrowRight size={14} />
+                      </Link>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </>
         )}
       </div>
       <style>{`
-        @media (max-width: 700px) {
-          .order-row { grid-template-columns: 1fr 1fr !important; }
+        @media (max-width: 680px) {
+          .order-table { display: none !important; }
+          .order-cards { display: flex !important; }
         }
       `}</style>
     </Layout>

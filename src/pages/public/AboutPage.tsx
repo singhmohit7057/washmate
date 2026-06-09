@@ -146,6 +146,11 @@ export default function AboutPage() {
         @media (max-width: 768px) {
           .about-grid, .mv-grid { grid-template-columns: 1fr !important; }
         }
+        @media (max-width: 600px) {
+          .about-hero { padding: 48px 16px !important; }
+          .about-section { padding: 48px 16px !important; }
+          .about-team-grid { grid-template-columns: 1fr 1fr !important; }
+        }
       `}</style>
     </Layout>
   );

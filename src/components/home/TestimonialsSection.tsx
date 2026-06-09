@@ -17,13 +17,25 @@ export default function TestimonialsSection() {
   const { ref, isVisible } = useScrollAnimation();
   const [current, setCurrent] = useState(0);
   const [direction, setDirection] = useState(1);
-  const perPage = 3;
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
+
+  const perPage = isMobile ? 1 : 3;
   const totalPages = Math.ceil(testimonials.length / perPage);
 
   const next = useCallback(() => {
     setDirection(1);
     setCurrent(p => (p + 1) % totalPages);
   }, [totalPages]);
+
+  // Reset page when perPage changes (on resize)
+  useEffect(() => { setCurrent(0); }, [perPage]);
 
   const prev = () => {
     setDirection(-1);
@@ -38,7 +50,7 @@ export default function TestimonialsSection() {
   const visible = testimonials.slice(current * perPage, current * perPage + perPage);
 
   return (
-    <section ref={ref} style={{ padding: '96px 24px', background: `linear-gradient(135deg, ${COLORS.dark} 0%, #1a1a2e 100%)` }}>
+    <section ref={ref} style={{ padding: '96px 24px', background: `linear-gradient(135deg, ${COLORS.dark} 0%, #1a1a2e 100%)` }} className="testimonials-section">
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -95,6 +107,11 @@ export default function TestimonialsSection() {
           </div>
         </div>
       </div>
+      <style>{`
+        @media (max-width: 640px) {
+          .testimonials-section { padding: 60px 16px !important; }
+        }
+      `}</style>
     </section>
   );
 }

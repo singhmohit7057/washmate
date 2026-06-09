@@ -63,13 +63,19 @@ export default function Button({
     ...style,
   };
 
+  // Separate HTML button props from any accidental motion props
+  const { onClick, type, form, name, value, autoFocus, tabIndex, className, id, ...restProps } = props;
+  const htmlProps = { onClick, type, form, name, value, autoFocus, tabIndex, className, id };
+  // Filter out undefined entries so motion.button doesn't see them
+  Object.keys(htmlProps).forEach(k => (htmlProps as Record<string, unknown>)[k] === undefined && delete (htmlProps as Record<string, unknown>)[k]);
+
   return (
     <motion.button
       whileHover={!disabled && !loading ? { scale: 1.02, filter: 'brightness(1.05)' } : {}}
       whileTap={!disabled && !loading ? { scale: 0.98 } : {}}
       style={baseStyle}
       disabled={disabled || loading}
-      {...(props as never)}
+      {...htmlProps}
     >
       {loading && (
         <span style={{ width: 16, height: 16, border: '2px solid transparent', borderTopColor: 'currentColor', borderRadius: '50%', animation: 'spin 0.6s linear infinite', display: 'inline-block' }} />

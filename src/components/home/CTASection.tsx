@@ -9,14 +9,14 @@ export default function CTASection() {
   const { ref, isVisible } = useScrollAnimation();
 
   return (
-    <section ref={ref} style={{ padding: '96px 24px', background: COLORS.background }}>
+    <section ref={ref} style={{ padding: '96px 24px', background: COLORS.background }} className="cta-section">
       <div style={{ maxWidth: '800px', margin: '0 auto', textAlign: 'center' }}>
         <motion.div
           initial={{ opacity: 0, y: 40, scale: 0.97 }}
           animate={isVisible ? { opacity: 1, y: 0, scale: 1 } : {}}
           transition={{ duration: 0.7 }}
         >
-          <div style={{ background: `linear-gradient(135deg, ${COLORS.primary} 0%, #0056CC 100%)`, borderRadius: '28px', padding: '64px 48px', boxShadow: `0 24px 60px ${COLORS.primary}30`, position: 'relative', overflow: 'hidden' }}>
+          <div style={{ background: `linear-gradient(135deg, ${COLORS.primary} 0%, #0056CC 100%)`, borderRadius: '28px', padding: '64px 48px', boxShadow: `0 24px 60px ${COLORS.primary}30`, position: 'relative', overflow: 'hidden' }} className="cta-inner">
             {/* Background decoration */}
             <div style={{ position: 'absolute', top: '-30%', right: '-10%', width: 300, height: 300, borderRadius: '50%', background: 'rgba(255,255,255,0.05)', pointerEvents: 'none' }} />
             <div style={{ position: 'absolute', bottom: '-20%', left: '-5%', width: 200, height: 200, borderRadius: '50%', background: 'rgba(255,255,255,0.05)', pointerEvents: 'none' }} />
@@ -53,6 +53,12 @@ export default function CTASection() {
           </div>
         </motion.div>
       </div>
+      <style>{`
+        @media (max-width: 600px) {
+          .cta-section { padding: 60px 16px !important; }
+          .cta-inner { padding: 36px 20px !important; border-radius: 20px !important; }
+        }
+      `}</style>
     </section>
   );
 }

@@ -9,7 +9,7 @@ export default function ServiceAreasSection() {
   const { ref, isVisible } = useScrollAnimation();
 
   return (
-    <section ref={ref} style={{ padding: '96px 24px', background: COLORS.background }}>
+    <section ref={ref} style={{ padding: '96px 24px', background: COLORS.background }} className="service-areas-section">
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -72,6 +72,11 @@ export default function ServiceAreasSection() {
           </Link>
         </motion.div>
       </div>
+      <style>{`
+        @media (max-width: 600px) {
+          .service-areas-section { padding: 60px 16px !important; }
+        }
+      `}</style>
     </section>
   );
 }

@@ -58,7 +58,7 @@ const footerLinks = {
 export default function Footer() {
   return (
     <footer style={{ background: COLORS.dark, color: '#9CA3AF', marginTop: 'auto' }}>
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '64px 24px 32px' }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '64px 24px 32px' }} className="footer-inner">
         {/* Top section */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '48px', marginBottom: '48px' }}>
           {/* Brand */}
@@ -135,15 +135,22 @@ export default function Footer() {
         </div>
 
         {/* Bottom */}
-        <div style={{ borderTop: '1px solid #1F2937', paddingTop: '24px', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
+        <div style={{ borderTop: '1px solid #1F2937', paddingTop: '24px', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }} className="footer-bottom">
           <p style={{ fontSize: '14px', margin: 0 }}>© {new Date().getFullYear()} {BRAND.name}. All rights reserved.</p>
-          <div style={{ display: 'flex', gap: '24px' }}>
+          <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
             {['Privacy Policy', 'Terms of Service', 'Refund Policy'].map(item => (
               <a key={item} href="#" style={{ color: '#9CA3AF', textDecoration: 'none', fontSize: '13px' }}>{item}</a>
             ))}
           </div>
         </div>
       </div>
+      <style>{`
+        @media (max-width: 600px) {
+          .footer-inner { padding: 40px 16px 24px !important; }
+          .footer-bottom { flex-direction: column; align-items: flex-start !important; gap: 8px !important; }
+          .footer-bottom > div { gap: 12px !important; }
+        }
+      `}</style>
     </footer>
   );
 }

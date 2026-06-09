@@ -8,6 +8,7 @@ import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import { COLORS, ORDER_STATUSES } from '../../lib/constants';
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../lib/supabase';
+import type { OrderRow } from '../../types/database';
 
 const STATUS_ICONS: Record<string, React.ComponentType<{ size?: number; color?: string }>> = {
   pickup_scheduled: Calendar,
@@ -48,7 +49,7 @@ export default function OrderTrackingPage() {
       .neq('status', 'delivered')
       .order('created_at', { ascending: false })
       .then(({ data }) => {
-        const mapped = (data ?? []).map(d => ({
+        const mapped = ((data ?? []) as OrderRow[]).map(d => ({
           id: d.id,
           orderNumber: d.order_number,
           status: d.status,

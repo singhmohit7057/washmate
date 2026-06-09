@@ -172,6 +172,10 @@ export default function ServiceAreasPage() {
         @media (max-width: 768px) {
           .area-card { grid-template-columns: 1fr !important; }
         }
+        @media (max-width: 600px) {
+          .areas-hero { padding: 48px 16px 40px !important; }
+          .areas-body { padding: 40px 16px !important; }
+        }
       `}</style>
     </Layout>
   );

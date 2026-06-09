@@ -191,6 +191,11 @@ export default function ContactPage() {
           .contact-grid { grid-template-columns: 1fr !important; }
           .form-grid { grid-template-columns: 1fr !important; }
         }
+        @media (max-width: 600px) {
+          .contact-hero { padding: 48px 16px 40px !important; }
+          .contact-body { padding: 40px 16px !important; }
+          .contact-info-card { padding: 24px 16px !important; }
+        }
       `}</style>
     </Layout>
   );

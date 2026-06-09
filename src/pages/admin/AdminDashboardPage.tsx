@@ -107,7 +107,7 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* Filters */}
-        <div style={{ display: 'flex', gap: '12px', marginBottom: '24px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '12px', marginBottom: '24px', flexWrap: 'wrap' }} className="admin-filters">
           <div style={{ flex: 1, minWidth: 200, position: 'relative' }}>
             <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: COLORS.muted }} />
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search orders..." style={{ width: '100%', padding: '10px 10px 10px 36px', borderRadius: '10px', border: `1.5px solid ${COLORS.border}`, fontSize: '14px', fontFamily: 'inherit', boxSizing: 'border-box' }} />
@@ -120,40 +120,81 @@ export default function AdminDashboardPage() {
 
         {/* Orders table */}
         {loading ? <LoadingSpinner /> : (
-          <div style={{ background: '#fff', borderRadius: '16px', border: `1px solid ${COLORS.border}`, overflow: 'hidden' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr 120px 100px 160px 120px', padding: '12px 20px', background: COLORS.background }}>
-              {['Order #', 'Address', 'Pickup', 'Total', 'Status', 'Update'].map(h => (
-                <span key={h} style={{ fontSize: '12px', fontWeight: 700, color: COLORS.muted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</span>
-              ))}
-            </div>
-            {filtered.map(order => (
-              <div key={order.id} style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr 120px 100px 160px 120px', padding: '16px 20px', borderTop: `1px solid ${COLORS.border}`, alignItems: 'center', gap: '8px' }} className="admin-order-row">
-                <span style={{ fontWeight: 700, color: COLORS.dark, fontSize: '13px' }}>#{order.orderNumber}</span>
-                <span style={{ fontSize: '12px', color: COLORS.muted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{order.deliveryAddress}</span>
-                <span style={{ fontSize: '12px', color: COLORS.darkMuted }}>{order.pickupDate}</span>
-                <span style={{ fontWeight: 700, color: COLORS.dark, fontSize: '13px' }}>₹{order.total}</span>
-                <Badge variant={order.status === 'delivered' ? 'success' : order.status === 'cancelled' ? 'danger' : 'warning'} size="sm">
-                  {ORDER_STATUSES.find(s => s.key === order.status)?.label ?? order.status}
-                </Badge>
-                <select
-                  value={order.status}
-                  disabled={updatingId === order.id}
-                  onChange={e => updateStatus(order.id, e.target.value)}
-                  style={{ padding: '6px 10px', borderRadius: '8px', border: `1px solid ${COLORS.border}`, fontSize: '12px', fontFamily: 'inherit', cursor: 'pointer', maxWidth: '120px' }}
-                >
-                  {UPDATE_STATUSES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
-                </select>
+          <>
+            {/* Desktop table */}
+            <div className="admin-table" style={{ background: '#fff', borderRadius: '16px', border: `1px solid ${COLORS.border}`, overflow: 'hidden' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr 120px 100px 160px 130px', padding: '12px 20px', background: COLORS.background }}>
+                {['Order #', 'Address', 'Pickup', 'Total', 'Status', 'Update'].map(h => (
+                  <span key={h} style={{ fontSize: '12px', fontWeight: 700, color: COLORS.muted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</span>
+                ))}
               </div>
-            ))}
-            {!filtered.length && (
-              <div style={{ textAlign: 'center', padding: '40px', color: COLORS.muted }}>No orders found.</div>
-            )}
-          </div>
+              {filtered.map(order => (
+                <div key={order.id} style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr 120px 100px 160px 130px', padding: '16px 20px', borderTop: `1px solid ${COLORS.border}`, alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontWeight: 700, color: COLORS.dark, fontSize: '13px' }}>#{order.orderNumber}</span>
+                  <span style={{ fontSize: '12px', color: COLORS.muted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{order.deliveryAddress}</span>
+                  <span style={{ fontSize: '12px', color: COLORS.darkMuted }}>{order.pickupDate}</span>
+                  <span style={{ fontWeight: 700, color: COLORS.dark, fontSize: '13px' }}>₹{order.total}</span>
+                  <Badge variant={order.status === 'delivered' ? 'success' : order.status === 'cancelled' ? 'danger' : 'warning'} size="sm">
+                    {ORDER_STATUSES.find(s => s.key === order.status)?.label ?? order.status}
+                  </Badge>
+                  <select
+                    value={order.status}
+                    disabled={updatingId === order.id}
+                    onChange={e => updateStatus(order.id, e.target.value)}
+                    style={{ padding: '6px 10px', borderRadius: '8px', border: `1px solid ${COLORS.border}`, fontSize: '12px', fontFamily: 'inherit', cursor: 'pointer' }}
+                  >
+                    {UPDATE_STATUSES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+                  </select>
+                </div>
+              ))}
+              {!filtered.length && (
+                <div style={{ textAlign: 'center', padding: '40px', color: COLORS.muted }}>No orders found.</div>
+              )}
+            </div>
+
+            {/* Mobile cards */}
+            <div className="admin-cards" style={{ display: 'none', flexDirection: 'column', gap: '12px' }}>
+              {filtered.map(order => (
+                <div key={order.id} style={{ background: '#fff', borderRadius: '14px', border: `1px solid ${COLORS.border}`, padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                    <span style={{ fontWeight: 800, color: COLORS.dark }}>#{order.orderNumber}</span>
+                    <Badge variant={order.status === 'delivered' ? 'success' : order.status === 'cancelled' ? 'danger' : 'warning'} size="sm">
+                      {ORDER_STATUSES.find(s => s.key === order.status)?.label ?? order.status}
+                    </Badge>
+                  </div>
+                  <div style={{ fontSize: '13px', color: COLORS.muted, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{order.deliveryAddress}</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '13px' }}>
+                    <div><span style={{ color: COLORS.muted }}>Pickup: </span><strong>{order.pickupDate}</strong></div>
+                    <div><span style={{ color: COLORS.muted }}>Total: </span><strong>₹{order.total}</strong></div>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '11px', fontWeight: 700, color: COLORS.muted, textTransform: 'uppercase', display: 'block', marginBottom: '4px' }}>Update Status</label>
+                    <select
+                      value={order.status}
+                      disabled={updatingId === order.id}
+                      onChange={e => updateStatus(order.id, e.target.value)}
+                      style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: `1px solid ${COLORS.border}`, fontSize: '14px', fontFamily: 'inherit', cursor: 'pointer' }}
+                    >
+                      {UPDATE_STATUSES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+                    </select>
+                  </div>
+                </div>
+              ))}
+              {!filtered.length && (
+                <div style={{ textAlign: 'center', padding: '40px', color: COLORS.muted, background: '#fff', borderRadius: '14px', border: `1px solid ${COLORS.border}` }}>No orders found.</div>
+              )}
+            </div>
+          </>
         )}
       </div>
       <style>{`
-        @media (max-width: 900px) {
-          .admin-order-row { grid-template-columns: 1fr 1fr !important; }
+        @media (max-width: 800px) {
+          .admin-table { display: none !important; }
+          .admin-cards { display: flex !important; }
+        }
+        @media (max-width: 600px) {
+          .admin-filters { flex-direction: column !important; }
+          .admin-filters select { width: 100% !important; }
         }
       `}</style>
     </Layout>

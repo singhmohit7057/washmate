@@ -121,6 +121,10 @@ export default function HowItWorksPage() {
       <style>{`
         @media (max-width: 600px) {
           .timeline-line { left: 22px !important; }
+          .hiw-hero { padding: 48px 16px 40px !important; }
+          .hiw-body { padding: 48px 16px !important; }
+          .hiw-step { gap: 12px !important; }
+          .hiw-step-icon { width: 44px !important; height: 44px !important; flex-shrink: 0; }
         }
       `}</style>
 

@@ -25,7 +25,8 @@ export default function DashboardPage() {
       .order('created_at', { ascending: false })
       .limit(5)
       .then(({ data }) => {
-        setOrders((data ?? []).map(d => ({
+        type Row = { id: string; order_number: string; status: string; delivery_type: string; pickup_date: string; pickup_time: string; total: number; created_at: string };
+        setOrders(((data ?? []) as Row[]).map(d => ({
           id: d.id,
           orderNumber: d.order_number,
           status: d.status,

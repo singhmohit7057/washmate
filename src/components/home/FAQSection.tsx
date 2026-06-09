@@ -9,7 +9,7 @@ export default function FAQSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
-    <section ref={ref} style={{ padding: '96px 24px', background: '#fff' }} id="faq">
+    <section ref={ref} style={{ padding: '96px 24px', background: '#fff' }} id="faq" className="faq-section">
       <div style={{ maxWidth: '780px', margin: '0 auto' }}>
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -66,6 +66,11 @@ export default function FAQSection() {
           ))}
         </div>
       </div>
+      <style>{`
+        @media (max-width: 600px) {
+          .faq-section { padding: 60px 16px !important; }
+        }
+      `}</style>
     </section>
   );
 }

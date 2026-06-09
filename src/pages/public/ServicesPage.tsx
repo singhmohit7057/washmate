@@ -158,8 +158,13 @@ export default function ServicesPage() {
       <CTASection />
       <style>{`
         @media (max-width: 768px) {
-          .service-row { grid-template-columns: 1fr !important; }
+          .service-row { grid-template-columns: 1fr !important; gap: 24px !important; }
           .service-row > * { order: unset !important; }
+        }
+        @media (max-width: 600px) {
+          .services-hero { padding: 48px 16px 40px !important; }
+          .services-body { padding: 48px 16px !important; }
+          .service-card-inner { padding: 24px 16px !important; }
         }
       `}</style>
     </Layout>

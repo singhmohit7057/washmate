@@ -36,12 +36,12 @@ export default function SuperAdminDashboardPage() {
         </div>
 
         {/* Tab bar */}
-        <div style={{ display: 'flex', gap: '4px', background: COLORS.background, padding: '4px', borderRadius: '12px', marginBottom: '32px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '4px', background: COLORS.background, padding: '4px', borderRadius: '12px', marginBottom: '32px', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }} className="super-tab-bar">
           {tabs.map(tab => (
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
-              style={{ padding: '8px 18px', borderRadius: '10px', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '14px', fontFamily: 'inherit', background: activeTab === tab.key ? '#fff' : 'transparent', color: activeTab === tab.key ? COLORS.primary : COLORS.muted, boxShadow: activeTab === tab.key ? '0 2px 8px rgba(0,0,0,0.08)' : 'none', transition: 'all 0.2s' }}
+              style={{ padding: '8px 18px', borderRadius: '10px', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '14px', fontFamily: 'inherit', background: activeTab === tab.key ? '#fff' : 'transparent', color: activeTab === tab.key ? COLORS.primary : COLORS.muted, boxShadow: activeTab === tab.key ? '0 2px 8px rgba(0,0,0,0.08)' : 'none', transition: 'all 0.2s', whiteSpace: 'nowrap', flexShrink: 0 }}
             >
               {tab.label}
             </button>
@@ -301,37 +301,90 @@ function PricingManager() {
       <h2 style={{ fontSize: '20px', fontWeight: 800, color: COLORS.dark, marginBottom: '8px' }}>Pricing Management</h2>
       <p style={{ color: COLORS.muted, fontSize: '14px', marginBottom: '24px' }}>Changes reflect immediately across the website.</p>
       {loading ? <LoadingSpinner /> : (
-        <div style={{ background: '#fff', borderRadius: '16px', border: `1px solid ${COLORS.border}`, overflow: 'hidden' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 80px', padding: '12px 20px', background: COLORS.background, gap: '8px' }}>
-            {['Item', 'Category', 'W&F ₹', 'DC ₹', 'SI ₹', ''].map(h => <span key={h} style={{ fontSize: '12px', fontWeight: 700, color: COLORS.muted, textTransform: 'uppercase' }}>{h}</span>)}
-          </div>
-          {items.map(item => (
-            <div key={item.id} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 80px', padding: '12px 20px', borderTop: `1px solid ${COLORS.border}`, alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontWeight: 600, fontSize: '14px', color: COLORS.dark }}>{item.item_name}</span>
-              <span style={{ fontSize: '12px', color: COLORS.muted }}>{item.category}</span>
-              {editId === item.id ? (
-                <>
-                  <input value={editValues.wash_fold_price} onChange={e => setEditValues(p => ({ ...p, wash_fold_price: e.target.value }))} style={{ padding: '6px 8px', borderRadius: '6px', border: `1px solid ${COLORS.border}`, width: '70px', fontFamily: 'inherit' }} placeholder="—" />
-                  <input value={editValues.dry_clean_price} onChange={e => setEditValues(p => ({ ...p, dry_clean_price: e.target.value }))} style={{ padding: '6px 8px', borderRadius: '6px', border: `1px solid ${COLORS.border}`, width: '70px', fontFamily: 'inherit' }} placeholder="—" />
-                  <input value={editValues.steam_iron_price} onChange={e => setEditValues(p => ({ ...p, steam_iron_price: e.target.value }))} style={{ padding: '6px 8px', borderRadius: '6px', border: `1px solid ${COLORS.border}`, width: '70px', fontFamily: 'inherit' }} placeholder="—" />
-                  <div style={{ display: 'flex', gap: '4px' }}>
-                    <button onClick={saveEdit} disabled={saving} style={{ background: COLORS.success, color: '#fff', border: 'none', borderRadius: '6px', padding: '6px 10px', cursor: 'pointer', fontSize: '12px', fontFamily: 'inherit' }}>Save</button>
-                    <button onClick={() => setEditId(null)} style={{ background: COLORS.border, color: COLORS.dark, border: 'none', borderRadius: '6px', padding: '6px 10px', cursor: 'pointer', fontSize: '12px', fontFamily: 'inherit' }}>Cancel</button>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <span style={{ fontSize: '14px', fontWeight: 600, color: COLORS.primary }}>{item.wash_fold_price ? `₹${item.wash_fold_price}` : '—'}</span>
-                  <span style={{ fontSize: '14px', fontWeight: 600, color: '#8B5CF6' }}>{item.dry_clean_price ? `₹${item.dry_clean_price}` : '—'}</span>
-                  <span style={{ fontSize: '14px', fontWeight: 600, color: '#F59E0B' }}>{item.steam_iron_price ? `₹${item.steam_iron_price}` : '—'}</span>
-                  <button onClick={() => startEdit(item)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: COLORS.primary, display: 'flex', alignItems: 'center', gap: '4px', fontFamily: 'inherit', fontSize: '13px', fontWeight: 600 }}>
-                    <Edit size={14} /> Edit
-                  </button>
-                </>
-              )}
+        <>
+          {/* Desktop table */}
+          <div className="pricing-table" style={{ background: '#fff', borderRadius: '16px', border: `1px solid ${COLORS.border}`, overflow: 'hidden' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 80px', padding: '12px 20px', background: COLORS.background, gap: '8px' }}>
+              {['Item', 'Category', 'W&F ₹', 'DC ₹', 'SI ₹', ''].map(h => <span key={h} style={{ fontSize: '12px', fontWeight: 700, color: COLORS.muted, textTransform: 'uppercase' }}>{h}</span>)}
             </div>
-          ))}
-        </div>
+            {items.map(item => (
+              <div key={item.id} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 80px', padding: '12px 20px', borderTop: `1px solid ${COLORS.border}`, alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontWeight: 600, fontSize: '14px', color: COLORS.dark }}>{item.item_name}</span>
+                <span style={{ fontSize: '12px', color: COLORS.muted }}>{item.category}</span>
+                {editId === item.id ? (
+                  <>
+                    <input value={editValues.wash_fold_price} onChange={e => setEditValues(p => ({ ...p, wash_fold_price: e.target.value }))} style={{ padding: '6px 8px', borderRadius: '6px', border: `1px solid ${COLORS.border}`, width: '70px', fontFamily: 'inherit' }} placeholder="—" />
+                    <input value={editValues.dry_clean_price} onChange={e => setEditValues(p => ({ ...p, dry_clean_price: e.target.value }))} style={{ padding: '6px 8px', borderRadius: '6px', border: `1px solid ${COLORS.border}`, width: '70px', fontFamily: 'inherit' }} placeholder="—" />
+                    <input value={editValues.steam_iron_price} onChange={e => setEditValues(p => ({ ...p, steam_iron_price: e.target.value }))} style={{ padding: '6px 8px', borderRadius: '6px', border: `1px solid ${COLORS.border}`, width: '70px', fontFamily: 'inherit' }} placeholder="—" />
+                    <div style={{ display: 'flex', gap: '4px' }}>
+                      <button onClick={saveEdit} disabled={saving} style={{ background: COLORS.success, color: '#fff', border: 'none', borderRadius: '6px', padding: '6px 10px', cursor: 'pointer', fontSize: '12px', fontFamily: 'inherit' }}>Save</button>
+                      <button onClick={() => setEditId(null)} style={{ background: COLORS.border, color: COLORS.dark, border: 'none', borderRadius: '6px', padding: '6px 10px', cursor: 'pointer', fontSize: '12px', fontFamily: 'inherit' }}>Cancel</button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <span style={{ fontSize: '14px', fontWeight: 600, color: COLORS.primary }}>{item.wash_fold_price ? `₹${item.wash_fold_price}` : '—'}</span>
+                    <span style={{ fontSize: '14px', fontWeight: 600, color: '#8B5CF6' }}>{item.dry_clean_price ? `₹${item.dry_clean_price}` : '—'}</span>
+                    <span style={{ fontSize: '14px', fontWeight: 600, color: '#F59E0B' }}>{item.steam_iron_price ? `₹${item.steam_iron_price}` : '—'}</span>
+                    <button onClick={() => startEdit(item)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: COLORS.primary, display: 'flex', alignItems: 'center', gap: '4px', fontFamily: 'inherit', fontSize: '13px', fontWeight: 600 }}>
+                      <Edit size={14} /> Edit
+                    </button>
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Mobile cards */}
+          <div className="pricing-cards" style={{ display: 'none', flexDirection: 'column', gap: '10px' }}>
+            {items.map(item => (
+              <div key={item.id} style={{ background: '#fff', borderRadius: '12px', border: `1px solid ${COLORS.border}`, padding: '14px 16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <span style={{ fontWeight: 700, fontSize: '14px', color: COLORS.dark }}>{item.item_name}</span>
+                  <span style={{ fontSize: '11px', color: COLORS.muted, background: COLORS.background, padding: '2px 8px', borderRadius: '6px' }}>{item.category}</span>
+                </div>
+                {editId === item.id ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '6px' }}>
+                      {[
+                        { label: 'W&F', key: 'wash_fold_price' as const, color: COLORS.primary },
+                        { label: 'DC', key: 'dry_clean_price' as const, color: '#8B5CF6' },
+                        { label: 'SI', key: 'steam_iron_price' as const, color: '#F59E0B' },
+                      ].map(f => (
+                        <div key={f.key}>
+                          <label style={{ fontSize: '10px', fontWeight: 700, color: f.color, display: 'block', marginBottom: '2px' }}>{f.label}</label>
+                          <input value={editValues[f.key]} onChange={e => setEditValues(p => ({ ...p, [f.key]: e.target.value }))} style={{ width: '100%', padding: '6px 8px', borderRadius: '6px', border: `1px solid ${COLORS.border}`, fontFamily: 'inherit', fontSize: '13px', boxSizing: 'border-box' }} placeholder="—" />
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{ display: 'flex', gap: '6px' }}>
+                      <button onClick={saveEdit} disabled={saving} style={{ flex: 1, background: COLORS.success, color: '#fff', border: 'none', borderRadius: '6px', padding: '8px', cursor: 'pointer', fontSize: '13px', fontFamily: 'inherit', fontWeight: 600 }}>Save</button>
+                      <button onClick={() => setEditId(null)} style={{ flex: 1, background: COLORS.border, color: COLORS.dark, border: 'none', borderRadius: '6px', padding: '8px', cursor: 'pointer', fontSize: '13px', fontFamily: 'inherit' }}>Cancel</button>
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', gap: '12px', fontSize: '13px' }}>
+                      <span style={{ color: COLORS.primary, fontWeight: 600 }}>{item.wash_fold_price ? `₹${item.wash_fold_price}` : '—'}</span>
+                      <span style={{ color: '#8B5CF6', fontWeight: 600 }}>{item.dry_clean_price ? `₹${item.dry_clean_price}` : '—'}</span>
+                      <span style={{ color: '#F59E0B', fontWeight: 600 }}>{item.steam_iron_price ? `₹${item.steam_iron_price}` : '—'}</span>
+                    </div>
+                    <button onClick={() => startEdit(item)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: COLORS.primary, display: 'flex', alignItems: 'center', gap: '4px', fontFamily: 'inherit', fontSize: '13px', fontWeight: 600 }}>
+                      <Edit size={14} /> Edit
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+          <style>{`
+            @media (max-width: 700px) {
+              .pricing-table { display: none !important; }
+              .pricing-cards { display: flex !important; }
+              .super-tab-bar { border-radius: 10px !important; }
+            }
+          `}</style>
+        </>
       )}
     </div>
   );

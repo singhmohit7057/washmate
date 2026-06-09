@@ -9,7 +9,6 @@ interface AuthContextValue {
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: Error | null }>;
-  signInWithGoogle: () => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   isRole: (role: UserRole) => boolean;
   isAdmin: boolean;
@@ -24,7 +23,7 @@ async function fetchUserRole(userId: string): Promise<UserRole> {
     .select('role')
     .eq('user_id', userId)
     .single();
-  return (data?.role as UserRole) ?? 'customer';
+  return ((data as { role?: string } | null)?.role as UserRole) ?? 'customer';
 }
 
 async function buildAuthUser(supabaseUser: User): Promise<AuthUser> {
@@ -35,13 +34,14 @@ async function buildAuthUser(supabaseUser: User): Promise<AuthUser> {
     .single();
 
   const role = await fetchUserRole(supabaseUser.id);
+  const p = profile as { full_name?: string | null; phone?: string | null; avatar_url?: string | null } | null;
 
   return {
     id: supabaseUser.id,
     email: supabaseUser.email ?? '',
-    fullName: profile?.full_name ?? supabaseUser.user_metadata?.full_name ?? null,
-    phone: profile?.phone ?? null,
-    avatarUrl: profile?.avatar_url ?? supabaseUser.user_metadata?.avatar_url ?? null,
+    fullName: p?.full_name ?? (supabaseUser.user_metadata?.full_name as string | null) ?? null,
+    phone: p?.phone ?? null,
+    avatarUrl: p?.avatar_url ?? (supabaseUser.user_metadata?.avatar_url as string | null) ?? null,
     role,
   };
 }
@@ -88,14 +88,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { error: error as Error | null };
   };
 
-  const signInWithGoogle = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: `${window.location.origin}/dashboard` },
-    });
-    return { error: error as Error | null };
-  };
-
   const signOut = async () => {
     await supabase.auth.signOut();
     setUser(null);
@@ -107,7 +99,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const isSuperAdmin = user?.role === 'super_admin';
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signIn, signUp, signInWithGoogle, signOut, isRole, isAdmin, isSuperAdmin }}>
+    <AuthContext.Provider value={{ user, session, loading, signIn, signUp, signOut, isRole, isAdmin, isSuperAdmin }}>
       {children}
     </AuthContext.Provider>
   );

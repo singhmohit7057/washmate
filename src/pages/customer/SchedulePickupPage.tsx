@@ -139,7 +139,7 @@ export default function SchedulePickupPage() {
   return (
     <Layout>
       <SEO title="Schedule Pickup | WashMate" description="Schedule a free laundry pickup with WashMate." noIndex />
-      <section style={{ padding: '60px 24px 80px', background: COLORS.background }}>
+      <section style={{ padding: '60px 24px 80px', background: COLORS.background }} className="schedule-section">
         <div style={{ maxWidth: '700px', margin: '0 auto' }}>
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ marginBottom: '40px' }}>
             <h1 style={{ fontSize: 'clamp(28px, 4vw, 42px)', fontWeight: 900, color: COLORS.dark, marginBottom: '12px', letterSpacing: '-0.5px' }}>
@@ -154,6 +154,7 @@ export default function SchedulePickupPage() {
             transition={{ delay: 0.1 }}
             onSubmit={handleSubmit}
             style={{ background: '#fff', borderRadius: '20px', padding: '40px', border: `1px solid ${COLORS.border}`, boxShadow: '0 4px 16px rgba(0,0,0,0.06)', display: 'flex', flexDirection: 'column', gap: '24px' }}
+            className="schedule-form-card"
           >
             {/* Section: Personal */}
             <SectionHeader title="Your Details" step={1} />
@@ -173,7 +174,7 @@ export default function SchedulePickupPage() {
             {/* Section: Service */}
             <SectionHeader title="Service Details" step={3} />
             <Select label="Service Type *" value={form.serviceType} onChange={update('serviceType')} error={errors.serviceType} options={SERVICE_OPTIONS} />
-            <div style={{ display: 'flex', gap: '12px' }}>
+            <div style={{ display: 'flex', gap: '12px' }} className="delivery-type-row">
               {(['regular', 'express'] as const).map(type => (
                 <button
                   key={type}
@@ -238,6 +239,11 @@ export default function SchedulePickupPage() {
       <style>{`
         @media (max-width: 600px) {
           .form-grid { grid-template-columns: 1fr !important; }
+          .schedule-form-card { padding: 24px 16px !important; }
+          .delivery-type-row { flex-direction: column !important; }
+        }
+        @media (max-width: 480px) {
+          .schedule-section { padding: 40px 12px 60px !important; }
         }
       `}</style>
     </Layout>

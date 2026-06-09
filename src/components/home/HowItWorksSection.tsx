@@ -15,7 +15,7 @@ export default function HowItWorksSection() {
   const { ref, isVisible } = useScrollAnimation();
 
   return (
-    <section ref={ref} style={{ padding: '96px 24px', background: '#fff' }}>
+    <section ref={ref} style={{ padding: '96px 24px', background: '#fff' }} className="hiw-section">
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -70,6 +70,9 @@ export default function HowItWorksSection() {
       <style>{`
         @media (max-width: 768px) {
           .connector-line { display: none !important; }
+        }
+        @media (max-width: 600px) {
+          .hiw-section { padding: 60px 16px !important; }
         }
       `}</style>
     </section>
