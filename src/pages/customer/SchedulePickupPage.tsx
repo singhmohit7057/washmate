@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { CheckCircle, Tag } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { CheckCircle, Tag, MapPin, Plus, Home, Briefcase } from 'lucide-react';
 import Layout from '../../components/layout/Layout';
 import SEO from '../../components/ui/SEO';
 import { Input, Textarea, Select } from '../../components/ui/Input';
@@ -9,7 +9,7 @@ import Button from '../../components/ui/Button';
 import { COLORS } from '../../lib/constants';
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../lib/supabase';
-import type { SchedulePickupForm } from '../../types';
+import type { SchedulePickupForm, UserAddress } from '../../types';
 
 const SERVICE_OPTIONS = [
   { value: '', label: 'Select service type' },
@@ -28,12 +28,21 @@ const TIME_SLOTS = [
   { value: '16:00-20:00', label: '4:00 PM – 8:00 PM' },
 ];
 
+const LABEL_ICONS: Record<string, React.ComponentType<{ size?: number; color?: string }>> = {
+  Home: Home,
+  Work: Briefcase,
+  Other: MapPin,
+};
+
+type AddrMode = 'saved' | 'new';
+
 export default function SchedulePickupPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
+
   const [form, setForm] = useState<SchedulePickupForm>({
-    fullName: user?.fullName ?? '',
-    phone: user?.phone ?? '',
+    fullName: '',
+    phone: '',
     address: '',
     city: '',
     pincode: '',
@@ -44,26 +53,87 @@ export default function SchedulePickupPage() {
     couponCode: '',
     notes: '',
   });
-  const [errors, setErrors] = useState<Partial<Record<keyof SchedulePickupForm, string>>>({});
-  const [loading, setLoading] = useState(false);
+
+  // Sync name + phone once auth resolves (user is null on first render)
+  useEffect(() => {
+    if (!user) return;
+    setForm(p => ({
+      ...p,
+      fullName: p.fullName || user.fullName || '',
+      phone:    p.phone    || user.phone    || '',
+    }));
+  }, [user]);
+  const [errors, setErrors]         = useState<Partial<Record<keyof SchedulePickupForm, string>>>({});
+  const [loading, setLoading]       = useState(false);
   const [couponStatus, setCouponStatus] = useState<'idle' | 'valid' | 'invalid'>('idle');
-  const [success, setSuccess] = useState(false);
+  const [success, setSuccess]       = useState(false);
   const [orderNumber, setOrderNumber] = useState('');
 
-  const update = (field: keyof SchedulePickupForm) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    setForm(p => ({ ...p, [field]: e.target.value }));
-    setErrors(p => ({ ...p, [field]: undefined }));
+  // Saved addresses
+  const [addresses, setAddresses]         = useState<UserAddress[]>([]);
+  const [addrMode, setAddrMode]           = useState<AddrMode>('saved');
+  const [selectedAddrId, setSelectedAddrId] = useState<string | null>(null);
+  const [addrsLoaded, setAddrsLoaded]     = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from('user_addresses')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('is_default', { ascending: false })
+      .then(({ data }) => {
+        const rows = (data ?? []) as UserAddress[];
+        setAddresses(rows);
+        setAddrsLoaded(true);
+        if (rows.length > 0) {
+          const def = rows.find(a => a.is_default) ?? rows[0];
+          setSelectedAddrId(def.id);
+          setAddrMode('saved');
+          // Pre-fill form fields from default
+          setForm(p => ({ ...p, address: def.address, city: def.city, pincode: def.pincode }));
+        } else {
+          setAddrMode('new');
+        }
+      });
+  }, [user]);
+
+  const selectAddr = (a: UserAddress) => {
+    setSelectedAddrId(a.id);
+    setForm(p => ({ ...p, address: a.address, city: a.city, pincode: a.pincode }));
+    setErrors(p => ({ ...p, address: undefined, city: undefined }));
   };
+
+  const switchToNew = () => {
+    setAddrMode('new');
+    setSelectedAddrId(null);
+    setForm(p => ({ ...p, address: '', city: '', pincode: '' }));
+  };
+
+  const switchToSaved = () => {
+    setAddrMode('saved');
+    const def = addresses.find(a => a.is_default) ?? addresses[0];
+    if (def) {
+      setSelectedAddrId(def.id);
+      setForm(p => ({ ...p, address: def.address, city: def.city, pincode: def.pincode }));
+    }
+  };
+
+  const update = (field: keyof SchedulePickupForm) =>
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+      setForm(p => ({ ...p, [field]: e.target.value }));
+      setErrors(p => ({ ...p, [field]: undefined }));
+    };
 
   const validate = () => {
     const errs: Partial<Record<keyof SchedulePickupForm, string>> = {};
-    if (!form.fullName) errs.fullName = 'Name is required';
-    if (!form.phone) errs.phone = 'Phone is required';
-    if (!form.address) errs.address = 'Address is required';
-    if (!form.city) errs.city = 'City is required';
+    if (!form.fullName)    errs.fullName    = 'Name is required';
+    if (!form.phone)       errs.phone       = 'Phone is required';
+    if (!form.address)     errs.address     = 'Address is required';
+    if (!form.city)        errs.city        = 'City is required';
     if (!form.serviceType) errs.serviceType = 'Please select a service';
-    if (!form.pickupDate) errs.pickupDate = 'Please select a date';
-    if (!form.pickupTime) errs.pickupTime = 'Please select a time slot';
+    if (!form.pickupDate)  errs.pickupDate  = 'Please select a date';
+    if (!form.pickupTime)  errs.pickupTime  = 'Please select a time slot';
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -89,7 +159,7 @@ export default function SchedulePickupPage() {
         delivery_type: form.deliveryType,
         pickup_date: form.pickupDate,
         pickup_time: form.pickupTime,
-        delivery_address: `${form.address}, ${form.city}, ${form.pincode}`,
+        delivery_address: `${form.address}, ${form.city}${form.pincode ? ', ' + form.pincode : ''}`,
         notes: form.notes || null,
         subtotal: 0,
         discount: 0,
@@ -121,9 +191,14 @@ export default function SchedulePickupPage() {
             <p style={{ fontSize: '16px', color: COLORS.muted, lineHeight: 1.7, marginBottom: '8px' }}>
               Order <strong style={{ color: COLORS.dark }}>#{orderNumber}</strong> confirmed.
             </p>
-            <p style={{ fontSize: '15px', color: COLORS.muted, marginBottom: '32px' }}>
-              Our agent will arrive on <strong>{form.pickupDate}</strong> during <strong>{form.pickupTime}</strong>.
+            <p style={{ fontSize: '15px', color: COLORS.muted, marginBottom: '16px' }}>
+              Our agent will arrive on <strong>{form.pickupDate}</strong> during <strong>{TIME_SLOTS.find(t => t.value === form.pickupTime)?.label ?? form.pickupTime}</strong>.
             </p>
+            {form.deliveryType === 'express' && (
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#FFF7ED', border: '1.5px solid #FED7AA', borderRadius: '10px', padding: '8px 16px', marginBottom: '24px', fontSize: '13px', fontWeight: 700, color: '#F97316' }}>
+                ⚡ Express order — 1.5× pricing will be applied to your bill
+              </div>
+            )}
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
               <Button onClick={() => navigate('/dashboard')}>Go to Dashboard</Button>
               <Button variant="ghost" onClick={() => { setSuccess(false); setForm(p => ({ ...p, pickupDate: '', pickupTime: '', notes: '' })); }}>
@@ -156,53 +231,129 @@ export default function SchedulePickupPage() {
             style={{ background: '#fff', borderRadius: '20px', padding: '40px', border: `1px solid ${COLORS.border}`, boxShadow: '0 4px 16px rgba(0,0,0,0.06)', display: 'flex', flexDirection: 'column', gap: '24px' }}
             className="schedule-form-card"
           >
-            {/* Section: Personal */}
+            {/* ── Step 1: Personal ── */}
             <SectionHeader title="Your Details" step={1} />
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }} className="form-grid">
               <Input label="Full Name *" placeholder="Priya Sharma" value={form.fullName} onChange={update('fullName')} error={errors.fullName} />
               <Input label="Phone Number *" type="tel" placeholder="+91 98765 43210" value={form.phone} onChange={update('phone')} error={errors.phone} />
             </div>
 
-            {/* Section: Address */}
+            {/* ── Step 2: Pickup Address ── */}
             <SectionHeader title="Pickup Address" step={2} />
-            <Textarea label="Street Address *" placeholder="House no, street, landmark" value={form.address} onChange={update('address')} error={errors.address} style={{ minHeight: 80 }} />
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }} className="form-grid">
-              <Input label="City *" placeholder="Kolkata" value={form.city} onChange={update('city')} error={errors.city} />
-              <Input label="Pincode" placeholder="700001" value={form.pincode} onChange={update('pincode')} />
-            </div>
 
-            {/* Section: Service */}
+            {/* Saved address picker (only when loaded and has entries) */}
+            {addrsLoaded && addresses.length > 0 && (
+              <div>
+                {/* Toggle tabs */}
+                <div style={{ display: 'flex', gap: '8px', marginBottom: '14px' }}>
+                  <button type="button" onClick={switchToSaved}
+                    style={{ padding: '8px 18px', borderRadius: '10px', border: `1.5px solid ${addrMode === 'saved' ? COLORS.primary : COLORS.border}`, background: addrMode === 'saved' ? COLORS.primaryLight : '#fff', color: addrMode === 'saved' ? COLORS.primary : COLORS.muted, fontWeight: 700, fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit' }}>
+                    📌 Saved Addresses
+                  </button>
+                  <button type="button" onClick={switchToNew}
+                    style={{ padding: '8px 18px', borderRadius: '10px', border: `1.5px solid ${addrMode === 'new' ? COLORS.primary : COLORS.border}`, background: addrMode === 'new' ? COLORS.primaryLight : '#fff', color: addrMode === 'new' ? COLORS.primary : COLORS.muted, fontWeight: 700, fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Plus size={13} /> Enter New</span>
+                  </button>
+                </div>
+
+                {/* Saved list */}
+                <AnimatePresence mode="wait">
+                  {addrMode === 'saved' && (
+                    <motion.div key="saved" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                      style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {addresses.map(a => {
+                        const LI = LABEL_ICONS[a.label] ?? MapPin;
+                        const isSelected = selectedAddrId === a.id;
+                        return (
+                          <button
+                            key={a.id}
+                            type="button"
+                            onClick={() => selectAddr(a)}
+                            style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', padding: '14px 16px', borderRadius: '12px', border: `2px solid ${isSelected ? COLORS.primary : COLORS.border}`, background: isSelected ? COLORS.primaryLight : '#FAFAFA', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit', width: '100%' }}
+                          >
+                            <div style={{ width: 32, height: 32, borderRadius: '8px', background: isSelected ? `${COLORS.primary}20` : '#fff', border: `1px solid ${COLORS.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '1px' }}>
+                              <LI size={15} color={isSelected ? COLORS.primary : COLORS.muted} />
+                            </div>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
+                                <span style={{ fontWeight: 800, fontSize: '13px', color: COLORS.dark }}>{a.label}</span>
+                                {a.is_default && <span style={{ fontSize: '10px', fontWeight: 700, background: COLORS.primary, color: '#fff', padding: '1px 6px', borderRadius: '999px' }}>Default</span>}
+                                {isSelected && <span style={{ fontSize: '10px', fontWeight: 700, background: COLORS.success, color: '#fff', padding: '1px 6px', borderRadius: '999px', marginLeft: 'auto' }}>✓ Selected</span>}
+                              </div>
+                              <div style={{ fontSize: '13px', color: COLORS.darkMuted }}>{a.address}</div>
+                              <div style={{ fontSize: '12px', color: COLORS.muted, marginTop: '2px' }}>{a.city}{a.pincode ? ` — ${a.pincode}` : ''}</div>
+                            </div>
+                          </button>
+                        );
+                      })}
+                      <Link to="/profile" style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: COLORS.primary, fontWeight: 600, textDecoration: 'none', marginTop: '4px' }}>
+                        <Plus size={12} /> Manage addresses in Profile
+                      </Link>
+                      {errors.address && <p style={{ color: COLORS.danger, fontSize: '12px', margin: '4px 0 0' }}>{errors.address}</p>}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
+
+            {/* Manual address entry — shown when no saved addresses OR addrMode=new */}
+            <AnimatePresence mode="wait">
+              {(addrMode === 'new' || !addrsLoaded || addresses.length === 0) && (
+                <motion.div key="new-addr" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                  style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <Textarea label="Street Address *" placeholder="House no, street, landmark" value={form.address} onChange={update('address')} error={errors.address} style={{ minHeight: 80 }} />
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }} className="form-grid">
+                    <Input label="City *" placeholder="Kolkata" value={form.city} onChange={update('city')} error={errors.city} />
+                    <Input label="Pincode" placeholder="700001" value={form.pincode} onChange={update('pincode')} />
+                  </div>
+                  {addresses.length === 0 && addrsLoaded && (
+                    <p style={{ fontSize: '12px', color: COLORS.muted, margin: 0 }}>
+                      💡 <Link to="/profile" style={{ color: COLORS.primary, fontWeight: 600, textDecoration: 'none' }}>Save addresses in your profile</Link> for faster checkout next time.
+                    </p>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* ── Step 3: Service ── */}
             <SectionHeader title="Service Details" step={3} />
             <Select label="Service Type *" value={form.serviceType} onChange={update('serviceType')} error={errors.serviceType} options={SERVICE_OPTIONS} />
             <div style={{ display: 'flex', gap: '12px' }} className="delivery-type-row">
-              {(['regular', 'express'] as const).map(type => (
-                <button
-                  key={type}
-                  type="button"
-                  onClick={() => setForm(p => ({ ...p, deliveryType: type }))}
-                  style={{ flex: 1, padding: '14px', borderRadius: '12px', border: `2px solid ${form.deliveryType === type ? COLORS.primary : COLORS.border}`, background: form.deliveryType === type ? COLORS.primaryLight : '#fff', cursor: 'pointer', fontWeight: 700, fontSize: '14px', color: form.deliveryType === type ? COLORS.primary : COLORS.muted, textTransform: 'capitalize', fontFamily: 'inherit' }}
-                >
-                  {type === 'express' ? '⚡ Express (1.5×)' : '🕐 Regular (Free)'}
-                </button>
-              ))}
+              {/* Regular */}
+              <button type="button" onClick={() => setForm(p => ({ ...p, deliveryType: 'regular' }))}
+                style={{ flex: 1, padding: '14px 16px', borderRadius: '14px', border: `2px solid ${form.deliveryType === 'regular' ? COLORS.primary : COLORS.border}`, background: form.deliveryType === 'regular' ? COLORS.primaryLight : '#fff', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                  <span style={{ fontSize: '18px' }}>🕐</span>
+                  <span style={{ fontWeight: 800, fontSize: '14px', color: form.deliveryType === 'regular' ? COLORS.primary : COLORS.dark }}>Regular</span>
+                  <span style={{ marginLeft: 'auto', fontSize: '12px', fontWeight: 700, background: '#D1FAE5', color: '#065F46', padding: '2px 8px', borderRadius: '999px' }}>Free</span>
+                </div>
+                <p style={{ margin: 0, fontSize: '12px', color: COLORS.muted, lineHeight: 1.5 }}>Standard pricing · 2–3 day turnaround</p>
+              </button>
+              {/* Express */}
+              <button type="button" onClick={() => setForm(p => ({ ...p, deliveryType: 'express' }))}
+                style={{ flex: 1, padding: '14px 16px', borderRadius: '14px', border: `2px solid ${form.deliveryType === 'express' ? '#F97316' : COLORS.border}`, background: form.deliveryType === 'express' ? '#FFF7ED' : '#fff', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                  <span style={{ fontSize: '18px' }}>⚡</span>
+                  <span style={{ fontWeight: 800, fontSize: '14px', color: form.deliveryType === 'express' ? '#F97316' : COLORS.dark }}>Express</span>
+                  <span style={{ marginLeft: 'auto', fontSize: '12px', fontWeight: 700, background: '#FFF7ED', color: '#F97316', padding: '2px 8px', borderRadius: '999px', border: '1px solid #FED7AA' }}>1.5×</span>
+                </div>
+                <p style={{ margin: 0, fontSize: '12px', color: COLORS.muted, lineHeight: 1.5 }}>Priority processing · Same/next day</p>
+              </button>
             </div>
 
-            {/* Section: Schedule */}
+            {/* ── Step 4: Schedule ── */}
             <SectionHeader title="Pickup Schedule" step={4} />
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }} className="form-grid">
               <Input
-                label="Pickup Date *"
-                type="date"
-                value={form.pickupDate}
-                onChange={update('pickupDate')}
+                label="Pickup Date *" type="date"
+                value={form.pickupDate} onChange={update('pickupDate')}
                 error={errors.pickupDate}
                 style={{ colorScheme: 'light' }}
                 min={minDate.toISOString().split('T')[0]}
               />
               <Select
                 label="Time Slot *"
-                value={form.pickupTime}
-                onChange={update('pickupTime')}
+                value={form.pickupTime} onChange={update('pickupTime')}
                 error={errors.pickupTime}
                 options={[{ value: '', label: 'Select time slot' }, ...TIME_SLOTS]}
               />
@@ -222,17 +373,15 @@ export default function SchedulePickupPage() {
                 />
                 <Button type="button" variant="outline" onClick={applyCoupon}>Apply</Button>
               </div>
-              {couponStatus === 'valid' && <p style={{ color: COLORS.success, fontSize: '13px', marginTop: '4px' }}>✓ Coupon applied!</p>}
-              {couponStatus === 'invalid' && <p style={{ color: COLORS.danger, fontSize: '13px', marginTop: '4px' }}>✗ Invalid or expired coupon.</p>}
+              {couponStatus === 'valid'   && <p style={{ color: COLORS.success, fontSize: '13px', marginTop: '4px' }}>✓ Coupon applied!</p>}
+              {couponStatus === 'invalid' && <p style={{ color: COLORS.danger,  fontSize: '13px', marginTop: '4px' }}>✗ Invalid or expired coupon.</p>}
             </div>
 
             <Textarea label="Special Instructions" placeholder="Any special care instructions, fragile items, stain info..." value={form.notes} onChange={update('notes')} style={{ minHeight: 80 }} />
 
             {errors.notes && <p style={{ color: COLORS.danger, fontSize: '13px', margin: 0 }}>{errors.notes}</p>}
 
-            <Button type="submit" size="lg" loading={loading} fullWidth>
-              Confirm Pickup
-            </Button>
+            <Button type="submit" size="lg" loading={loading} fullWidth>Confirm Pickup</Button>
           </motion.form>
         </div>
       </section>

@@ -20,6 +20,7 @@ interface AdminOrder {
   deliveryAddress: string;
   createdAt: string;
   userId: string;
+  notes: string | null;
 }
 
 const UPDATE_STATUSES = ORDER_STATUSES.map(s => ({ value: s.key, label: s.label }));
@@ -31,9 +32,21 @@ export default function AdminDashboardPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [editingAmount, setEditingAmount] = useState<string | null>(null); // order id being edited
+  const [amountDraft, setAmountDraft] = useState<string>('');
+
+  const saveAmount = async (orderId: string) => {
+    const val = parseFloat(amountDraft);
+    if (isNaN(val) || val < 0) return;
+    setUpdatingId(orderId);
+    await supabase.from('orders').update({ total: val, subtotal: val, updated_at: new Date().toISOString() }).eq('id', orderId);
+    setOrders(prev => prev.map(o => o.id === orderId ? { ...o, total: val } : o));
+    setEditingAmount(null);
+    setUpdatingId(null);
+  };
 
   const loadOrders = async () => {
-    let query = supabase.from('orders').select('id, order_number, status, total, pickup_date, pickup_time, delivery_address, created_at, user_id').order('created_at', { ascending: false });
+    let query = supabase.from('orders').select('id, order_number, status, total, pickup_date, pickup_time, delivery_address, created_at, user_id, notes').order('created_at', { ascending: false });
     if (statusFilter !== 'all') query = query.eq('status', statusFilter);
     const { data } = await query;
     setOrders((data ?? []).map(d => ({
@@ -46,6 +59,7 @@ export default function AdminDashboardPage() {
       deliveryAddress: d.delivery_address,
       createdAt: d.created_at,
       userId: d.user_id,
+      notes: d.notes ?? null,
     })));
     setLoading(false);
   };
@@ -123,28 +137,56 @@ export default function AdminDashboardPage() {
           <>
             {/* Desktop table */}
             <div className="admin-table" style={{ background: '#fff', borderRadius: '16px', border: `1px solid ${COLORS.border}`, overflow: 'hidden' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr 120px 100px 160px 130px', padding: '12px 20px', background: COLORS.background }}>
-                {['Order #', 'Address', 'Pickup', 'Total', 'Status', 'Update'].map(h => (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr 120px 130px 160px 130px', padding: '12px 20px', background: COLORS.background }}>
+                {['Order #', 'Address', 'Pickup', 'Amount (₹)', 'Status', 'Update'].map(h => (
                   <span key={h} style={{ fontSize: '12px', fontWeight: 700, color: COLORS.muted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</span>
                 ))}
               </div>
               {filtered.map(order => (
-                <div key={order.id} style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr 120px 100px 160px 130px', padding: '16px 20px', borderTop: `1px solid ${COLORS.border}`, alignItems: 'center', gap: '8px' }}>
-                  <span style={{ fontWeight: 700, color: COLORS.dark, fontSize: '13px' }}>#{order.orderNumber}</span>
-                  <span style={{ fontSize: '12px', color: COLORS.muted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{order.deliveryAddress}</span>
-                  <span style={{ fontSize: '12px', color: COLORS.darkMuted }}>{order.pickupDate}</span>
-                  <span style={{ fontWeight: 700, color: COLORS.dark, fontSize: '13px' }}>₹{order.total}</span>
-                  <Badge variant={order.status === 'delivered' ? 'success' : order.status === 'cancelled' ? 'danger' : 'warning'} size="sm">
-                    {ORDER_STATUSES.find(s => s.key === order.status)?.label ?? order.status}
-                  </Badge>
-                  <select
-                    value={order.status}
-                    disabled={updatingId === order.id}
-                    onChange={e => updateStatus(order.id, e.target.value)}
-                    style={{ padding: '6px 10px', borderRadius: '8px', border: `1px solid ${COLORS.border}`, fontSize: '12px', fontFamily: 'inherit', cursor: 'pointer' }}
-                  >
-                    {UPDATE_STATUSES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
-                  </select>
+                <div key={order.id} style={{ borderTop: `1px solid ${COLORS.border}` }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr 120px 130px 160px 130px', padding: '16px 20px', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontWeight: 700, color: COLORS.dark, fontSize: '13px' }}>#{order.orderNumber}</span>
+                    <span style={{ fontSize: '12px', color: COLORS.muted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{order.deliveryAddress}</span>
+                    <span style={{ fontSize: '12px', color: COLORS.darkMuted }}>{order.pickupDate}</span>
+                    {/* Editable amount */}
+                    {editingAmount === order.id ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <span style={{ fontSize: '13px', color: COLORS.muted }}>₹</span>
+                        <input
+                          type="number" min="0" value={amountDraft}
+                          onChange={e => setAmountDraft(e.target.value)}
+                          onKeyDown={e => { if (e.key === 'Enter') saveAmount(order.id); if (e.key === 'Escape') setEditingAmount(null); }}
+                          autoFocus
+                          style={{ width: '70px', padding: '4px 6px', borderRadius: '6px', border: `1.5px solid ${COLORS.primary}`, fontSize: '13px', fontFamily: 'inherit' }}
+                        />
+                        <button onClick={() => saveAmount(order.id)} style={{ padding: '3px 7px', borderRadius: '6px', background: COLORS.primary, color: '#fff', border: 'none', fontSize: '11px', fontWeight: 700, cursor: 'pointer' }}>✓</button>
+                        <button onClick={() => setEditingAmount(null)} style={{ padding: '3px 6px', borderRadius: '6px', background: '#fff', color: COLORS.muted, border: `1px solid ${COLORS.border}`, fontSize: '11px', cursor: 'pointer' }}>✕</button>
+                      </div>
+                    ) : (
+                      <button onClick={() => { setEditingAmount(order.id); setAmountDraft(String(order.total)); }}
+                        title="Click to set amount"
+                        style={{ background: order.total === 0 ? '#FFF7ED' : 'transparent', border: order.total === 0 ? `1px dashed #FCA5A5` : `1px dashed ${COLORS.border}`, borderRadius: '6px', padding: '3px 8px', fontWeight: 700, fontSize: '13px', color: order.total === 0 ? COLORS.danger : COLORS.dark, cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left' }}>
+                        ₹{order.total} ✎
+                      </button>
+                    )}
+                    <Badge variant={order.status === 'delivered' ? 'success' : order.status === 'cancelled' ? 'danger' : 'warning'} size="sm">
+                      {ORDER_STATUSES.find(s => s.key === order.status)?.label ?? order.status}
+                    </Badge>
+                    <select
+                      value={order.status}
+                      disabled={updatingId === order.id}
+                      onChange={e => updateStatus(order.id, e.target.value)}
+                      style={{ padding: '6px 10px', borderRadius: '8px', border: `1px solid ${COLORS.border}`, fontSize: '12px', fontFamily: 'inherit', cursor: 'pointer' }}
+                    >
+                      {UPDATE_STATUSES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+                    </select>
+                  </div>
+                  {order.notes && (
+                    <div style={{ margin: '0 20px 14px', padding: '10px 14px', background: '#FFFBEB', borderRadius: '8px', border: '1px solid #FDE68A', display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                      <span style={{ fontSize: '13px', flexShrink: 0 }}>📋</span>
+                      <p style={{ margin: 0, fontSize: '12px', color: '#78350F' }}><strong>Note:</strong> {order.notes}</p>
+                    </div>
+                  )}
                 </div>
               ))}
               {!filtered.length && (
@@ -165,8 +207,31 @@ export default function AdminDashboardPage() {
                   <div style={{ fontSize: '13px', color: COLORS.muted, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{order.deliveryAddress}</div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '13px' }}>
                     <div><span style={{ color: COLORS.muted }}>Pickup: </span><strong>{order.pickupDate}</strong></div>
-                    <div><span style={{ color: COLORS.muted }}>Total: </span><strong>₹{order.total}</strong></div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ color: COLORS.muted }}>Amount: </span>
+                      {editingAmount === order.id ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <span style={{ fontSize: '13px', color: COLORS.muted }}>₹</span>
+                          <input type="number" min="0" value={amountDraft} onChange={e => setAmountDraft(e.target.value)}
+                            onKeyDown={e => { if (e.key === 'Enter') saveAmount(order.id); if (e.key === 'Escape') setEditingAmount(null); }}
+                            autoFocus style={{ width: '70px', padding: '4px 6px', borderRadius: '6px', border: `1.5px solid ${COLORS.primary}`, fontSize: '13px', fontFamily: 'inherit' }} />
+                          <button onClick={() => saveAmount(order.id)} style={{ padding: '3px 7px', borderRadius: '6px', background: COLORS.primary, color: '#fff', border: 'none', fontSize: '11px', fontWeight: 700, cursor: 'pointer' }}>✓</button>
+                          <button onClick={() => setEditingAmount(null)} style={{ padding: '3px 6px', borderRadius: '6px', background: '#fff', color: COLORS.muted, border: `1px solid ${COLORS.border}`, fontSize: '11px', cursor: 'pointer' }}>✕</button>
+                        </div>
+                      ) : (
+                        <button onClick={() => { setEditingAmount(order.id); setAmountDraft(String(order.total)); }}
+                          style={{ background: 'none', border: 'none', fontWeight: 700, fontSize: '13px', color: order.total === 0 ? COLORS.danger : COLORS.dark, cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}>
+                          ₹{order.total} ✎
+                        </button>
+                      )}
+                    </div>
                   </div>
+                  {order.notes && (
+                    <div style={{ padding: '10px 12px', background: '#FFFBEB', borderRadius: '8px', border: '1px solid #FDE68A', display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                      <span style={{ fontSize: '13px', flexShrink: 0 }}>📋</span>
+                      <p style={{ margin: 0, fontSize: '12px', color: '#78350F' }}><strong>Note:</strong> {order.notes}</p>
+                    </div>
+                  )}
                   <div>
                     <label style={{ fontSize: '11px', fontWeight: 700, color: COLORS.muted, textTransform: 'uppercase', display: 'block', marginBottom: '4px' }}>Update Status</label>
                     <select

@@ -34,6 +34,12 @@ const ProfilePage = lazy(() => import('./pages/customer/ProfilePage'));
 const AdminDashboardPage = lazy(() => import('./pages/admin/AdminDashboardPage'));
 const SuperAdminDashboardPage = lazy(() => import('./pages/admin/SuperAdminDashboardPage'));
 
+// Legal pages
+const PrivacyPolicyPage = lazy(() => import('./pages/legal/PrivacyPolicyPage'));
+const CookiesPolicyPage = lazy(() => import('./pages/legal/CookiesPolicyPage'));
+const TermsPage         = lazy(() => import('./pages/legal/TermsPage'));
+const RefundPolicyPage  = lazy(() => import('./pages/legal/RefundPolicyPage'));
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -81,6 +87,12 @@ export default function App() {
             <Route path="/super-admin" element={
               <ProtectedRoute requiredRole="super_admin"><SuperAdminDashboardPage /></ProtectedRoute>
             } />
+
+            {/* Legal */}
+            <Route path="/privacy-policy"  element={<PrivacyPolicyPage />} />
+            <Route path="/cookies-policy"  element={<CookiesPolicyPage />} />
+            <Route path="/terms"           element={<TermsPage />} />
+            <Route path="/refund-policy"   element={<RefundPolicyPage />} />
 
             {/* Fallback */}
             <Route path="*" element={<Navigate to="/" replace />} />

@@ -29,12 +29,12 @@ async function fetchUserRole(userId: string): Promise<UserRole> {
 async function buildAuthUser(supabaseUser: User): Promise<AuthUser> {
   const { data: profile } = await supabase
     .from('users')
-    .select('full_name, phone, avatar_url')
+    .select('full_name, phone, avatar_url, created_at')
     .eq('id', supabaseUser.id)
     .single();
 
   const role = await fetchUserRole(supabaseUser.id);
-  const p = profile as { full_name?: string | null; phone?: string | null; avatar_url?: string | null } | null;
+  const p = profile as { full_name?: string | null; phone?: string | null; avatar_url?: string | null; created_at?: string | null } | null;
 
   return {
     id: supabaseUser.id,
@@ -43,6 +43,7 @@ async function buildAuthUser(supabaseUser: User): Promise<AuthUser> {
     phone: p?.phone ?? null,
     avatarUrl: p?.avatar_url ?? (supabaseUser.user_metadata?.avatar_url as string | null) ?? null,
     role,
+    createdAt: p?.created_at ?? supabaseUser.created_at ?? null,
   };
 }
 

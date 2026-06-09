@@ -57,6 +57,16 @@ export interface AuthUser {
   phone: string | null;
   avatarUrl: string | null;
   role: 'customer' | 'admin' | 'super_admin';
+  createdAt: string | null;
+}
+
+export interface UserAddress {
+  id: string;
+  label: string;
+  address: string;
+  city: string;
+  pincode: string;
+  is_default: boolean;
 }
 
 export interface Order {

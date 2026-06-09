@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Package, Clock, CheckCircle, Plus, ArrowRight, Truck } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Package, Clock, CheckCircle, Plus, ArrowRight, Truck, X, AlertTriangle } from 'lucide-react';
 import Layout from '../../components/layout/Layout';
 import SEO from '../../components/ui/SEO';
 import Badge from '../../components/ui/Badge';
@@ -120,7 +120,7 @@ export default function DashboardPage() {
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {orders.map(order => (
-                <OrderRow key={order.id} order={order} />
+                <OrderRow key={order.id} order={order} onCancelled={id => setOrders(prev => prev.map(o => o.id === id ? { ...o, status: 'cancelled' } : o))} />
               ))}
             </div>
           )}
@@ -130,29 +130,80 @@ export default function DashboardPage() {
   );
 }
 
-function OrderRow({ order }: { order: Order }) {
+function OrderRow({ order, onCancelled }: { order: Order; onCancelled: (id: string) => void }) {
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
   const statusInfo = ORDER_STATUSES.find(s => s.key === order.status);
   const badgeVariant = order.status === 'delivered' ? 'success' : order.status === 'cancelled' ? 'danger' : order.status === 'out_for_delivery' ? 'primary' : 'warning';
+  const isCancellable = order.status === 'pickup_scheduled';
+
+  const doCancel = async () => {
+    setCancelling(true);
+    await supabase.from('orders').update({ status: 'cancelled', updated_at: new Date().toISOString() }).eq('id', order.id);
+    onCancelled(order.id);
+    setCancelling(false);
+    setShowConfirm(false);
+  };
 
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      style={{ background: '#fff', border: `1px solid ${COLORS.border}`, borderRadius: '14px', padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}
+      style={{ background: '#fff', border: `1px solid ${order.status === 'cancelled' ? '#FCA5A5' : COLORS.border}`, borderRadius: '14px', overflow: 'hidden', opacity: order.status === 'cancelled' ? 0.7 : 1 }}
     >
-      <div>
-        <div style={{ fontWeight: 700, color: COLORS.dark, fontSize: '15px' }}>#{order.orderNumber}</div>
-        <div style={{ fontSize: '13px', color: COLORS.muted, marginTop: '4px' }}>
-          Pickup: {new Date(order.pickupDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} at {order.pickupTime}
+      <div style={{ padding: '18px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+        <div>
+          <div style={{ fontWeight: 700, color: COLORS.dark, fontSize: '15px' }}>#{order.orderNumber}</div>
+          <div style={{ fontSize: '13px', color: COLORS.muted, marginTop: '4px' }}>
+            Pickup: {new Date(order.pickupDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} · {order.pickupTime}
+          </div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+          <Badge variant={badgeVariant} dot>{statusInfo?.label ?? order.status}</Badge>
+          <div style={{ fontWeight: 800, fontSize: '16px', color: COLORS.dark }}>₹{order.total}</div>
+          <Link to={`/order-tracking?order=${order.id}`} style={{ display: 'flex', alignItems: 'center', gap: '4px', color: COLORS.primary, fontWeight: 600, fontSize: '13px', textDecoration: 'none' }}>
+            {isCancellable ? 'Change Slot' : 'Track'} <ArrowRight size={12} />
+          </Link>
+          {isCancellable && !showConfirm && (
+            <button
+              onClick={() => setShowConfirm(true)}
+              style={{ display: 'flex', alignItems: 'center', gap: '4px', color: COLORS.danger, background: '#FFF5F5', border: `1px solid ${COLORS.danger}30`, borderRadius: '8px', padding: '5px 10px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
+            >
+              <X size={11} /> Cancel
+            </button>
+          )}
         </div>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <Badge variant={badgeVariant} dot>{statusInfo?.label ?? order.status}</Badge>
-        <div style={{ fontWeight: 800, fontSize: '16px', color: COLORS.dark }}>₹{order.total}</div>
-        <Link to={`/order-tracking?order=${order.id}`} style={{ display: 'flex', alignItems: 'center', gap: '4px', color: COLORS.primary, fontWeight: 600, fontSize: '13px', textDecoration: 'none' }}>
-          Track <ArrowRight size={12} />
-        </Link>
-      </div>
+
+      {/* Inline cancel confirmation */}
+      <AnimatePresence>
+        {showConfirm && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            style={{ overflow: 'hidden' }}
+          >
+            <div style={{ borderTop: `1px solid ${COLORS.border}`, padding: '14px 24px', background: '#FFF5F5', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+              <AlertTriangle size={16} color={COLORS.danger} />
+              <span style={{ fontSize: '13px', color: COLORS.darkMuted, flex: 1 }}>Cancel pickup for order <strong>#{order.orderNumber}</strong>?</span>
+              <button
+                onClick={doCancel}
+                disabled={cancelling}
+                style={{ padding: '7px 18px', borderRadius: '8px', background: COLORS.danger, color: '#fff', fontWeight: 700, fontSize: '12px', border: 'none', cursor: 'pointer', fontFamily: 'inherit', opacity: cancelling ? 0.6 : 1 }}
+              >
+                {cancelling ? 'Cancelling…' : 'Yes, Cancel'}
+              </button>
+              <button
+                onClick={() => setShowConfirm(false)}
+                style={{ padding: '7px 14px', borderRadius: '8px', background: '#fff', color: COLORS.muted, fontWeight: 600, fontSize: '12px', border: `1px solid ${COLORS.border}`, cursor: 'pointer', fontFamily: 'inherit' }}
+              >
+                Keep
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }

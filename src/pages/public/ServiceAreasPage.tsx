@@ -13,6 +13,7 @@ type AreaRow = {
   id: string;
   slug: string;
   name: string;
+  city: string;
   state: string;
   coverage: string | null;
   pickup_slots: string | null;
@@ -33,7 +34,7 @@ export default function ServiceAreasPage() {
   useEffect(() => {
     supabase
       .from('service_areas')
-      .select('id, slug, name, state, coverage, pickup_slots, delivery_info, pincodes, landmarks, is_active, sort_order')
+      .select('id, slug, name, city, state, coverage, pickup_slots, delivery_info, pincodes, landmarks, is_active, sort_order')
       .eq('is_active', true)
       .order('sort_order')
       .then(({ data }) => {

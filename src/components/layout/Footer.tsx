@@ -137,9 +137,14 @@ export default function Footer() {
         {/* Bottom */}
         <div style={{ borderTop: '1px solid #1F2937', paddingTop: '24px', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }} className="footer-bottom">
           <p style={{ fontSize: '14px', margin: 0 }}>© {new Date().getFullYear()} {BRAND.name}. All rights reserved.</p>
-          <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
-            {['Privacy Policy', 'Terms of Service', 'Refund Policy'].map(item => (
-              <a key={item} href="#" style={{ color: '#9CA3AF', textDecoration: 'none', fontSize: '13px' }}>{item}</a>
+          <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+            {[
+              { label: 'Privacy Policy',  href: '/privacy-policy' },
+              { label: 'Cookies Policy',  href: '/cookies-policy' },
+              { label: 'Terms & Conditions', href: '/terms' },
+              { label: 'Refund Policy',   href: '/refund-policy' },
+            ].map(item => (
+              <Link key={item.href} to={item.href} style={{ color: '#9CA3AF', textDecoration: 'none', fontSize: '13px' }}>{item.label}</Link>
             ))}
           </div>
         </div>
