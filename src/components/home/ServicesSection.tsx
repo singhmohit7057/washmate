@@ -1,21 +1,36 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Shirt, Wind, Zap, Footprints, Blinds, BedDouble, ArrowRight } from 'lucide-react';
+import { Shirt, Wind, Zap, Footprints, Blinds, BedDouble, Sparkles, ArrowRight } from 'lucide-react';
 import { useScrollAnimation } from '../../hooks/useScrollAnimation';
 import { COLORS } from '../../lib/constants';
+import { supabase } from '../../lib/supabase';
 
-const services = [
-  { icon: Shirt, name: 'Wash & Fold', desc: 'Machine wash, dry, and neatly fold. Perfect for everyday clothing.', price: '₹49', slug: 'wash-fold', color: COLORS.primary },
-  { icon: Wind, name: 'Dry Cleaning', desc: 'Chemical-free solvent cleaning for delicate and premium fabrics.', price: '₹149', slug: 'dry-cleaning', color: '#8B5CF6' },
-  { icon: Zap, name: 'Steam Ironing', desc: 'Professional steam ironing for crisp, wrinkle-free garments.', price: '₹29', slug: 'steam-ironing', color: '#F59E0B' },
-  { icon: Footprints, name: 'Shoe Cleaning', desc: 'Expert cleaning and restoration for all types of footwear.', price: '₹199', slug: 'shoe-cleaning', color: '#EF4444' },
-  { icon: Blinds, name: 'Curtain Cleaning', desc: 'Deep clean and freshening for all curtain fabrics and sizes.', price: '₹99', slug: 'curtain-cleaning', color: '#06B6D4' },
-  { icon: BedDouble, name: 'Blanket Cleaning', desc: 'Thorough wash for blankets, quilts, and heavy bedding.', price: '₹149', slug: 'blanket-cleaning', color: '#10B981' },
-];
+// slug → icon & color (fallback for new services added via admin)
+const SLUG_META: Record<string, { icon: React.ComponentType<{ size?: number; color?: string }>; color: string; desc: string }> = {
+  'wash-fold':       { icon: Shirt,     color: COLORS.primary, desc: 'Machine wash, dry, and neatly fold. Perfect for everyday clothing.' },
+  'dry-cleaning':    { icon: Wind,      color: '#8B5CF6',      desc: 'Chemical-free solvent cleaning for delicate and premium fabrics.' },
+  'steam-ironing':   { icon: Zap,       color: '#F59E0B',      desc: 'Professional steam ironing for crisp, wrinkle-free garments.' },
+  'shoe-cleaning':   { icon: Footprints,color: '#EF4444',      desc: 'Expert cleaning and restoration for all types of footwear.' },
+  'curtain-cleaning':{ icon: Blinds,    color: '#06B6D4',      desc: 'Deep clean and freshening for all curtain fabrics and sizes.' },
+  'blanket-cleaning':{ icon: BedDouble, color: '#10B981',      desc: 'Thorough wash for blankets, quilts, and heavy bedding.' },
+};
+const PALETTE = ['#6366F1','#EC4899','#14B8A6','#F97316','#84CC16','#A855F7'];
+
+type ServiceRow = { id: string; name: string; slug: string; description: string | null; starting_price: number; sort_order: number };
 
 export default function ServicesSection() {
   const { ref, isVisible } = useScrollAnimation();
+  const [services, setServices] = useState<ServiceRow[]>([]);
+
+  useEffect(() => {
+    supabase
+      .from('services')
+      .select('id, name, slug, description, starting_price, sort_order')
+      .eq('is_active', true)
+      .order('sort_order')
+      .then(({ data }) => setServices((data ?? []) as ServiceRow[]));
+  }, []);
 
   return (
     <section ref={ref} style={{ padding: '96px 24px', background: COLORS.background }} id="services" className="services-section">
@@ -38,39 +53,46 @@ export default function ServicesSection() {
         </motion.div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
-          {services.map((service, i) => (
-            <motion.div
-              key={service.slug}
-              initial={{ opacity: 0, y: 40 }}
-              animate={isVisible ? { opacity: 1, y: 0 } : {}}
-              transition={{ delay: i * 0.08, duration: 0.5 }}
-            >
+          {services.map((service, i) => {
+            const meta = SLUG_META[service.slug];
+            const Icon = meta?.icon ?? Sparkles;
+            const color = meta?.color ?? PALETTE[i % PALETTE.length];
+            const desc = service.description ?? meta?.desc ?? 'Professional laundry care service.';
+
+            return (
               <motion.div
-                whileHover={{ y: -6, boxShadow: '0 20px 40px rgba(0,0,0,0.1)' }}
-                transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                style={{ background: '#fff', border: `1px solid ${COLORS.border}`, borderRadius: '20px', padding: '32px', height: '100%', boxShadow: '0 4px 16px rgba(0,0,0,0.06)', display: 'flex', flexDirection: 'column' }}
+                key={service.id}
+                initial={{ opacity: 0, y: 40 }}
+                animate={isVisible ? { opacity: 1, y: 0 } : {}}
+                transition={{ delay: i * 0.08, duration: 0.5 }}
               >
-                <div style={{ width: 60, height: 60, borderRadius: '16px', background: `${service.color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
-                  <service.icon size={26} color={service.color} />
-                </div>
-                <h3 style={{ fontSize: '19px', fontWeight: 800, color: COLORS.dark, marginBottom: '10px' }}>{service.name}</h3>
-                <p style={{ fontSize: '14px', color: COLORS.muted, lineHeight: 1.6, flex: 1, margin: '0 0 20px' }}>{service.desc}</p>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    <span style={{ fontSize: '12px', color: COLORS.muted }}>Starting at </span>
-                    <span style={{ fontSize: '22px', fontWeight: 900, color: COLORS.dark }}>{service.price}</span>
-                    <span style={{ fontSize: '12px', color: COLORS.muted }}>/item</span>
+                <motion.div
+                  whileHover={{ y: -6, boxShadow: '0 20px 40px rgba(0,0,0,0.1)' }}
+                  transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                  style={{ background: '#fff', border: `1px solid ${COLORS.border}`, borderRadius: '20px', padding: '32px', height: '100%', boxShadow: '0 4px 16px rgba(0,0,0,0.06)', display: 'flex', flexDirection: 'column' }}
+                >
+                  <div style={{ width: 60, height: 60, borderRadius: '16px', background: `${color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
+                    <Icon size={26} color={color} />
                   </div>
-                  <Link
-                    to={`/services#${service.slug}`}
-                    style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: service.color, fontWeight: 700, fontSize: '14px', textDecoration: 'none' }}
-                  >
-                    Learn More <ArrowRight size={14} />
-                  </Link>
-                </div>
+                  <h3 style={{ fontSize: '19px', fontWeight: 800, color: COLORS.dark, marginBottom: '10px' }}>{service.name}</h3>
+                  <p style={{ fontSize: '14px', color: COLORS.muted, lineHeight: 1.6, flex: 1, margin: '0 0 20px' }}>{desc}</p>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <span style={{ fontSize: '12px', color: COLORS.muted }}>Starting at </span>
+                      <span style={{ fontSize: '22px', fontWeight: 900, color: COLORS.dark }}>₹{service.starting_price}</span>
+                      <span style={{ fontSize: '12px', color: COLORS.muted }}>/item</span>
+                    </div>
+                    <Link
+                      to={`/services#${service.slug}`}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color, fontWeight: 700, fontSize: '14px', textDecoration: 'none' }}
+                    >
+                      Learn More <ArrowRight size={14} />
+                    </Link>
+                  </div>
+                </motion.div>
               </motion.div>
-            </motion.div>
-          ))}
+            );
+          })}
         </div>
 
         <motion.div

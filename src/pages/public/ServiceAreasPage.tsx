@@ -1,76 +1,47 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { MapPin, Clock, CheckCircle, ArrowRight } from 'lucide-react';
 import Layout from '../../components/layout/Layout';
 import SEO from '../../components/ui/SEO';
 import CTASection from '../../components/home/CTASection';
+import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import { COLORS } from '../../lib/constants';
+import { supabase } from '../../lib/supabase';
 
-const areas = [
-  {
-    slug: 'kolkata',
-    name: 'Kolkata',
-    state: 'West Bengal',
-    pincodes: ['700001–700099', '700101–700150'],
-    coverage: 'Full city coverage including North, South, East, and Central Kolkata. Serving residential and commercial addresses.',
-    pickup: 'Daily pickup slots: 8 AM–12 PM, 12 PM–4 PM, 4 PM–8 PM',
-    delivery: 'Regular: 48 hrs | Dry Clean: 72 hrs | Express: Same-day / Next-day',
-    landmarks: ['Park Street', 'Salt Lake', 'New Town', 'Gariahat', 'Shyambazar', 'Tollygunge'],
-  },
-  {
-    slug: 'barrackpore',
-    name: 'Barrackpore',
-    state: 'West Bengal',
-    pincodes: ['700120', '700121', '700122'],
-    coverage: 'Complete coverage of Barrackpore municipality and surrounding localities.',
-    pickup: 'Pickup slots: 9 AM–1 PM, 2 PM–6 PM',
-    delivery: 'Regular: 48 hrs | Dry Clean: 72 hrs | Express: Next-day',
-    landmarks: ['Barrackpore Cantonment', 'Titagarh Junction', 'Ichapur'],
-  },
-  {
-    slug: 'kankinara',
-    name: 'Kankinara',
-    state: 'West Bengal',
-    pincodes: ['743126'],
-    coverage: 'Covering Kankinara and adjacent areas including Jagaddal.',
-    pickup: 'Pickup slots: 9 AM–1 PM, 2 PM–6 PM',
-    delivery: 'Regular: 48 hrs | Dry Clean: 72 hrs',
-    landmarks: ['Kankinara Station', 'Jagaddal', 'Nabanagar'],
-  },
-  {
-    slug: 'naihati',
-    name: 'Naihati',
-    state: 'West Bengal',
-    pincodes: ['743165'],
-    coverage: 'Serving Naihati municipality and nearby localities.',
-    pickup: 'Pickup slots: 9 AM–1 PM, 2 PM–6 PM',
-    delivery: 'Regular: 48 hrs | Dry Clean: 72 hrs',
-    landmarks: ['Naihati Station', 'Halisahar', 'Kanchrapara'],
-  },
-  {
-    slug: 'titagarh',
-    name: 'Titagarh',
-    state: 'West Bengal',
-    pincodes: ['700119'],
-    coverage: 'Complete Titagarh municipality coverage.',
-    pickup: 'Pickup slots: 9 AM–1 PM, 2 PM–6 PM',
-    delivery: 'Regular: 48 hrs | Dry Clean: 72 hrs',
-    landmarks: ['Titagarh Station', 'Khardaha', 'Panihati'],
-  },
-  {
-    slug: 'kalyani',
-    name: 'Kalyani',
-    state: 'West Bengal',
-    pincodes: ['741235', '741236'],
-    coverage: 'Covering Kalyani township and all surrounding blocks.',
-    pickup: 'Pickup slots: 9 AM–1 PM, 2 PM–6 PM',
-    delivery: 'Regular: 48 hrs | Dry Clean: 72 hrs',
-    landmarks: ['Kalyani University', 'Kalyani Ghoshpara', 'Shaktinagar'],
-  },
-];
+type AreaRow = {
+  id: string;
+  slug: string;
+  name: string;
+  state: string;
+  coverage: string | null;
+  pickup_slots: string | null;
+  delivery_info: string | null;
+  pincodes: string | null;
+  landmarks: string | null;
+  is_active: boolean;
+  sort_order: number;
+};
+
+// Split comma-separated string to trimmed array
+const split = (val: string | null) => (val ?? '').split(',').map(s => s.trim()).filter(Boolean);
 
 export default function ServiceAreasPage() {
+  const [areas, setAreas] = useState<AreaRow[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    supabase
+      .from('service_areas')
+      .select('id, slug, name, state, coverage, pickup_slots, delivery_info, pincodes, landmarks, is_active, sort_order')
+      .eq('is_active', true)
+      .order('sort_order')
+      .then(({ data }) => {
+        setAreas((data ?? []) as AreaRow[]);
+        setLoading(false);
+      });
+  }, []);
+
   return (
     <Layout>
       <SEO
@@ -94,76 +65,101 @@ export default function ServiceAreasPage() {
 
       <section style={{ padding: '64px 24px', background: '#fff' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '32px' }}>
-          {areas.map((area, i) => (
-            <motion.div
-              key={area.slug}
-              id={area.slug}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.06 }}
-              style={{ background: '#FAFAFA', border: `1px solid ${COLORS.border}`, borderRadius: '20px', padding: '36px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' }}
-              className="area-card"
-            >
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-                  <div style={{ width: 48, height: 48, background: COLORS.primaryLight, borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <MapPin size={22} color={COLORS.primary} />
-                  </div>
-                  <div>
-                    <h2 style={{ fontSize: '22px', fontWeight: 900, color: COLORS.dark, margin: 0 }}>{area.name}</h2>
-                    <span style={{ fontSize: '13px', color: COLORS.muted }}>{area.state}</span>
-                  </div>
-                  <span style={{ marginLeft: 'auto', background: '#D1FAE5', color: '#059669', padding: '4px 12px', borderRadius: '999px', fontSize: '12px', fontWeight: 700 }}>Active</span>
-                </div>
-
-                <p style={{ fontSize: '15px', color: COLORS.darkMuted, lineHeight: 1.7, marginBottom: '16px' }}>{area.coverage}</p>
-
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '20px' }}>
-                  {area.pincodes.map(p => (
-                    <span key={p} style={{ background: COLORS.primaryLight, color: COLORS.primary, padding: '4px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 600 }}>
-                      PIN: {p}
-                    </span>
-                  ))}
-                </div>
-
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                  {area.landmarks.map(l => (
-                    <span key={l} style={{ background: COLORS.background, color: COLORS.darkMuted, padding: '4px 10px', borderRadius: '6px', fontSize: '12px', border: `1px solid ${COLORS.border}` }}>
-                      {l}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <div style={{ background: '#fff', border: `1px solid ${COLORS.border}`, borderRadius: '14px', padding: '20px' }}>
-                  <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
-                    <Clock size={18} color={COLORS.primary} style={{ marginTop: 2, flexShrink: 0 }} />
-                    <div>
-                      <div style={{ fontWeight: 700, fontSize: '14px', color: COLORS.dark, marginBottom: '4px' }}>Pickup Availability</div>
-                      <div style={{ fontSize: '14px', color: COLORS.darkMuted }}>{area.pickup}</div>
+          {loading ? (
+            <LoadingSpinner />
+          ) : areas.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '64px', color: COLORS.muted }}>
+              <MapPin size={48} color={COLORS.border} style={{ marginBottom: '16px' }} />
+              <p style={{ fontSize: '16px' }}>No service areas listed yet. Check back soon!</p>
+            </div>
+          ) : areas.map((area, i) => {
+            const pincodes = split(area.pincodes);
+            const landmarks = split(area.landmarks);
+            return (
+              <motion.div
+                key={area.id}
+                id={area.slug}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.06 }}
+                style={{ background: '#FAFAFA', border: `1px solid ${COLORS.border}`, borderRadius: '20px', padding: '36px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' }}
+                className="area-card"
+              >
+                {/* Left: info */}
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+                    <div style={{ width: 48, height: 48, background: COLORS.primaryLight, borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <MapPin size={22} color={COLORS.primary} />
                     </div>
-                  </div>
-                </div>
-                <div style={{ background: '#fff', border: `1px solid ${COLORS.border}`, borderRadius: '14px', padding: '20px' }}>
-                  <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
-                    <CheckCircle size={18} color={COLORS.success} style={{ marginTop: 2, flexShrink: 0 }} />
                     <div>
-                      <div style={{ fontWeight: 700, fontSize: '14px', color: COLORS.dark, marginBottom: '4px' }}>Delivery Timeline</div>
-                      <div style={{ fontSize: '14px', color: COLORS.darkMuted }}>{area.delivery}</div>
+                      <h2 style={{ fontSize: '22px', fontWeight: 900, color: COLORS.dark, margin: 0 }}>{area.name}</h2>
+                      <span style={{ fontSize: '13px', color: COLORS.muted }}>{area.state}</span>
                     </div>
+                    <span style={{ marginLeft: 'auto', background: '#D1FAE5', color: '#059669', padding: '4px 12px', borderRadius: '999px', fontSize: '12px', fontWeight: 700 }}>Active</span>
                   </div>
+
+                  {area.coverage && (
+                    <p style={{ fontSize: '15px', color: COLORS.darkMuted, lineHeight: 1.7, marginBottom: '16px' }}>{area.coverage}</p>
+                  )}
+
+                  {pincodes.length > 0 && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '16px' }}>
+                      {pincodes.map(p => (
+                        <span key={p} style={{ background: COLORS.primaryLight, color: COLORS.primary, padding: '4px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 600 }}>
+                          PIN: {p}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  {landmarks.length > 0 && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                      {landmarks.map(l => (
+                        <span key={l} style={{ background: COLORS.background, color: COLORS.darkMuted, padding: '4px 10px', borderRadius: '6px', fontSize: '12px', border: `1px solid ${COLORS.border}` }}>
+                          {l}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
-                <Link
-                  to={`/schedule-pickup?area=${area.slug}`}
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: COLORS.primary, color: '#fff', textDecoration: 'none', padding: '12px 20px', borderRadius: '12px', fontWeight: 700, fontSize: '14px' }}
-                >
-                  Schedule in {area.name} <ArrowRight size={14} />
-                </Link>
-              </div>
-            </motion.div>
-          ))}
+
+                {/* Right: pickup, delivery, CTA */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  {area.pickup_slots && (
+                    <div style={{ background: '#fff', border: `1px solid ${COLORS.border}`, borderRadius: '14px', padding: '20px' }}>
+                      <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+                        <Clock size={18} color={COLORS.primary} style={{ marginTop: 2, flexShrink: 0 }} />
+                        <div>
+                          <div style={{ fontWeight: 700, fontSize: '14px', color: COLORS.dark, marginBottom: '4px' }}>Pickup Availability</div>
+                          <div style={{ fontSize: '14px', color: COLORS.darkMuted }}>{area.pickup_slots}</div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {area.delivery_info && (
+                    <div style={{ background: '#fff', border: `1px solid ${COLORS.border}`, borderRadius: '14px', padding: '20px' }}>
+                      <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+                        <CheckCircle size={18} color={COLORS.success} style={{ marginTop: 2, flexShrink: 0 }} />
+                        <div>
+                          <div style={{ fontWeight: 700, fontSize: '14px', color: COLORS.dark, marginBottom: '4px' }}>Delivery Timeline</div>
+                          <div style={{ fontSize: '14px', color: COLORS.darkMuted }}>{area.delivery_info}</div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <Link
+                    to={`/schedule-pickup?area=${area.slug}`}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: COLORS.primary, color: '#fff', textDecoration: 'none', padding: '12px 20px', borderRadius: '12px', fontWeight: 700, fontSize: '14px' }}
+                  >
+                    Schedule in {area.name} <ArrowRight size={14} />
+                  </Link>
+                </div>
+              </motion.div>
+            );
+          })}
         </div>
       </section>
 

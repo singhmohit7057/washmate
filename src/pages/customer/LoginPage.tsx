@@ -27,7 +27,12 @@ export default function LoginPage() {
     const { error } = await signIn(email, password);
     setLoading(false);
     if (error) {
-      setError(error.message || 'Invalid email or password.');
+      const msg = error.message || '';
+      if (msg.toLowerCase().includes('email not confirmed')) {
+        setError('Please verify your email first. Check your inbox for a confirmation link.');
+      } else {
+        setError(msg || 'Invalid email or password.');
+      }
     } else {
       navigate(from, { replace: true });
     }

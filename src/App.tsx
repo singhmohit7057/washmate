@@ -1,8 +1,14 @@
-import React, { Suspense, lazy } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import React, { Suspense, lazy, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ui/ProtectedRoute';
 import LoadingSpinner from './components/ui/LoadingSpinner';
+
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => { window.scrollTo({ top: 0, left: 0, behavior: 'instant' }); }, [pathname]);
+  return null;
+}
 
 // Public pages
 const HomePage = lazy(() => import('./pages/public/HomePage'));
@@ -33,6 +39,7 @@ export default function App() {
     <BrowserRouter>
       <AuthProvider>
         <Suspense fallback={<LoadingSpinner fullPage />}>
+          <ScrollToTop />
           <Routes>
             {/* Public */}
             <Route path="/" element={<HomePage />} />

@@ -64,7 +64,7 @@ export default function AboutPage() {
             <motion.div initial={{ opacity: 0, x: 30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}>
               <div style={{ background: COLORS.background, borderRadius: '24px', padding: '40px', border: `1px solid ${COLORS.border}` }}>
                 {[
-                  { value: '2022', label: 'Founded' },
+                  { value: '2024', label: 'Founded' },
                   { value: '5,000+', label: 'Happy Customers' },
                   { value: '50,000+', label: 'Orders Completed' },
                   { value: '4.9/5', label: 'Customer Rating' },
